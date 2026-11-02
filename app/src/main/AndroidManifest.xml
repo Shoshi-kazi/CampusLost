@@ -42,6 +42,9 @@
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
+        <activity
+            android:name=".AddItemActivity"
+            android:exported="false" />
 
     </application>
 
