@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Lost Item"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
+
+    <EditText
+        android:id="@+id/etItemTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Item title"
+        android:inputType="textCapSentences" />
+
+    <EditText
+        android:id="@+id/etItemDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Item description"
+        android:inputType="textCapSentences|textMultiLine"
+        android:minLines="2"
+        android:gravity="top"
+        android:layout_marginTop="10dp" />
+
+    <EditText
+        android:id="@+id/etItemLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Location"
+        android:inputType="textCapSentences"
+        android:layout_marginTop="10dp" />
+
+    <EditText
+        android:id="@+id/etItemType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type: Lost or Found"
+        android:inputType="textCapWords"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/btnSaveItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Item"
+        android:layout_marginTop="24dp" />
+
+</LinearLayout>
