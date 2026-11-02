@@ -1,7 +1,9 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -47,27 +49,37 @@ public class AddItemActivity extends Activity {
         String location = etLocation.getText().toString().trim();
         String type = etType.getText().toString().trim();
 
+        // Validate title
         if (title.isEmpty()) {
             etTitle.setError("Title is required");
+            etTitle.requestFocus();
             return;
         }
 
+        // Validate description
         if (description.isEmpty()) {
             etDescription.setError("Description is required");
+            etDescription.requestFocus();
             return;
         }
 
+        // Validate location
         if (location.isEmpty()) {
             etLocation.setError("Location is required");
+            etLocation.requestFocus();
             return;
         }
 
+        // Validate item type
         if (!type.equalsIgnoreCase("Lost")
                 && !type.equalsIgnoreCase("Found")) {
+
             etType.setError("Enter Lost or Found");
+            etType.requestFocus();
             return;
         }
 
+        // Check logged-in user
         FirebaseUser currentUser = auth.getCurrentUser();
 
         if (currentUser == null) {
@@ -79,6 +91,7 @@ public class AddItemActivity extends Activity {
 
         String userId = currentUser.getUid();
 
+        // Generate item ID
         String itemId = databaseReference.push().getKey();
 
         if (itemId == null) {
@@ -90,6 +103,7 @@ public class AddItemActivity extends Activity {
 
         long timestamp = System.currentTimeMillis();
 
+        // Create LostItem object
         LostItem item = new LostItem(
                 itemId,
                 title,
@@ -100,6 +114,7 @@ public class AddItemActivity extends Activity {
                 timestamp
         );
 
+        // Disable button while saving
         btnSaveItem.setEnabled(false);
 
         databaseReference.child(itemId)
@@ -118,11 +133,19 @@ public class AddItemActivity extends Activity {
 
                     } else {
 
+                        Exception error = task.getException();
+
+                        Log.e("AddItemActivity",
+                                "Firebase save failed", error);
+
+                        String errorMessage = (error != null)
+                                ? error.getMessage()
+                                : "Unknown error";
+
                         Toast.makeText(this,
-                                "Failed to save item",
+                                "Failed: " + errorMessage,
                                 Toast.LENGTH_LONG).show();
                     }
                 });
     }
 }
-
