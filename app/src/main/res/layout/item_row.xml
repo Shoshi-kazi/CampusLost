@@ -44,6 +44,13 @@
             android:text="Type: Lost"
             android:textStyle="bold"
             android:textSize="14sp" />
+        <ImageView
+            android:id="@+id/ivItemImage"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:contentDescription="Item photo" />
 
     </LinearLayout>
 
