@@ -10,6 +10,7 @@ public class LostItem {
     private String type;
     private String userId;
     private long timestamp;
+    private String imageUrl;
 
     // Empty constructor
     public LostItem() {
@@ -18,7 +19,8 @@ public class LostItem {
     // Parameterized constructor
     public LostItem(String itemId, String title,
                     String description, String location,
-                    String type, String userId, long timestamp) {
+                    String type, String userId,
+                    long timestamp, String imageUrl) {
 
         this.itemId = itemId;
         this.title = title;
@@ -27,6 +29,7 @@ public class LostItem {
         this.type = type;
         this.userId = userId;
         this.timestamp = timestamp;
+        this.imageUrl = imageUrl;
     }
 
     public String getItemId() {
@@ -83,5 +86,13 @@ public class LostItem {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
