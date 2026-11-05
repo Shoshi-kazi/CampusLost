@@ -1,4 +1,3 @@
-
 package com.example.campuslost;
 
 public class LostItem {
@@ -9,18 +8,17 @@ public class LostItem {
     private String location;
     private String type;
     private String userId;
-    private long timestamp;
     private String imageUrl;
+    private long timestamp;
 
-    // Empty constructor
     public LostItem() {
+        // Required empty constructor for Firebase
     }
 
-    // Parameterized constructor
     public LostItem(String itemId, String title,
                     String description, String location,
                     String type, String userId,
-                    long timestamp, String imageUrl) {
+                    long timestamp) {
 
         this.itemId = itemId;
         this.title = title;
@@ -29,6 +27,16 @@ public class LostItem {
         this.type = type;
         this.userId = userId;
         this.timestamp = timestamp;
+    }
+
+    public LostItem(String itemId, String title,
+                    String description, String location,
+                    String type, String userId,
+                    long timestamp, String imageUrl) {
+
+        this(itemId, title, description, location,
+                type, userId, timestamp);
+
         this.imageUrl = imageUrl;
     }
 
@@ -80,19 +88,19 @@ public class LostItem {
         this.userId = userId;
     }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
     public String getImageUrl() {
         return imageUrl;
     }
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 }
