@@ -51,7 +51,6 @@
             android:scaleType="centerCrop"
             android:visibility="gone"
             android:contentDescription="Item photo" />
-
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

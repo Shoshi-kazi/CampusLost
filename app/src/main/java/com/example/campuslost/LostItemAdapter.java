@@ -1,12 +1,16 @@
+
 package com.example.campuslost;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -39,6 +43,24 @@ public class LostItemAdapter extends RecyclerView.Adapter<LostItemAdapter.ItemVi
         holder.tvDescription.setText(item.getDescription());
         holder.tvLocation.setText("Location: " + item.getLocation());
         holder.tvType.setText("Type: " + item.getType());
+
+        // Display item image
+        String imageUrl = item.getImageUrl();
+
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+
+            holder.ivItemImage.setVisibility(View.VISIBLE);
+
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .centerCrop()
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_report_image)
+                    .into(holder.ivItemImage);
+
+        } else {
+            holder.ivItemImage.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -49,6 +71,7 @@ public class LostItemAdapter extends RecyclerView.Adapter<LostItemAdapter.ItemVi
     public static class ItemViewHolder extends RecyclerView.ViewHolder {
 
         TextView tvTitle, tvDescription, tvLocation, tvType;
+        ImageView ivItemImage;
 
         public ItemViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -57,6 +80,8 @@ public class LostItemAdapter extends RecyclerView.Adapter<LostItemAdapter.ItemVi
             tvDescription = itemView.findViewById(R.id.tvItemDescription);
             tvLocation = itemView.findViewById(R.id.tvItemLocation);
             tvType = itemView.findViewById(R.id.tvItemType);
+
+            ivItemImage = itemView.findViewById(R.id.ivItemImage);
         }
     }
 }
