@@ -44,7 +44,7 @@ public class AddItemActivity extends Activity {
             Executors.newSingleThreadExecutor();
 
     // Replace with your actual Cloudinary details
-    private final String cloudName = "mycampus123";
+    private final String cloudName = "campuslost_unsigned";
     private final String uploadPreset = "campuslost_unsigned";
 
     @Override
