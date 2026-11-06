@@ -54,9 +54,19 @@ public class HomeActivity extends Activity {
     private Sensor accelerometer;
     private SensorEventListener sensorEventListener;
 
-    private static final float SHAKE_THRESHOLD = 15.0f;
+    private static final float SHAKE_THRESHOLD = 3.5f;
     private static final long SHAKE_COOLDOWN = 2000;
+
     private long lastShakeTime = 0;
+
+    // Gravity Filter
+    private float gravityX = 0;
+    private float gravityY = 0;
+    private float gravityZ = 0;
+
+    private boolean firstSensorReading = true;
+
+    private static final float GRAVITY_ALPHA = 0.8f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,7 +214,7 @@ public class HomeActivity extends Activity {
             applyFilters();
         });
 
-        // Attach Firebase Real-time Listener
+        // Firebase Real-time Listener
         loadItems();
 
         // Initialize Shake Sensor
@@ -346,18 +356,51 @@ public class HomeActivity extends Activity {
                 float y = event.values[1];
                 float z = event.values[2];
 
-                double acceleration = Math.sqrt(
-                        x * x + y * y + z * z
+                // Initialize gravity values on first reading
+                if (firstSensorReading) {
+
+                    gravityX = x;
+                    gravityY = y;
+                    gravityZ = z;
+
+                    firstSensorReading = false;
+                    return;
+                }
+
+                // Separate gravity from actual movement
+                gravityX = GRAVITY_ALPHA * gravityX
+                        + (1 - GRAVITY_ALPHA) * x;
+
+                gravityY = GRAVITY_ALPHA * gravityY
+                        + (1 - GRAVITY_ALPHA) * y;
+
+                gravityZ = GRAVITY_ALPHA * gravityZ
+                        + (1 - GRAVITY_ALPHA) * z;
+
+                // Calculate linear acceleration
+                float linearX = x - gravityX;
+                float linearY = y - gravityY;
+                float linearZ = z - gravityZ;
+
+                double shakeForce = Math.sqrt(
+                        linearX * linearX +
+                                linearY * linearY +
+                                linearZ * linearZ
                 );
 
                 long currentTime = System.currentTimeMillis();
 
-                if (acceleration > SHAKE_THRESHOLD &&
+                if (shakeForce > SHAKE_THRESHOLD &&
                         currentTime - lastShakeTime > SHAKE_COOLDOWN) {
 
                     lastShakeTime = currentTime;
 
-                    // Launch Voice Assistant
+                    Toast.makeText(
+                            HomeActivity.this,
+                            "Shake detected!",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
                     openVoiceAssistant();
                 }
             }
@@ -374,45 +417,24 @@ public class HomeActivity extends Activity {
 
     // Open Android Voice Assistant
     private void openVoiceAssistant() {
-
         try {
+            Intent intent = new Intent(Intent.ACTION_ASSIST);
+            startActivity(intent);
 
-            Intent voiceIntent = new Intent(
-                    Intent.ACTION_VOICE_COMMAND
-            );
-
-            startActivity(voiceIntent);
-
-        } catch (ActivityNotFoundException e) {
-
-            // Try Android Assistant as a fallback
+        } catch (Exception e) {
             try {
+                Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
+                startActivity(intent);
 
-                Intent assistIntent = new Intent(
-                        Intent.ACTION_ASSIST
-                );
-
-                startActivity(assistIntent);
-
-            } catch (ActivityNotFoundException | SecurityException error) {
-
+            } catch (Exception error) {
                 Toast.makeText(
-                        HomeActivity.this,
-                        "Voice Assistant is not available",
-                        Toast.LENGTH_SHORT
+                        this,
+                        "Voice Assistant could not open",
+                        Toast.LENGTH_LONG
                 ).show();
             }
-
-        } catch (SecurityException e) {
-
-            Toast.makeText(
-                    HomeActivity.this,
-                    "Cannot open Voice Assistant",
-                    Toast.LENGTH_SHORT
-            ).show();
         }
     }
-
     // Register Sensor when Activity Resumes
     @Override
     protected void onResume() {
@@ -425,7 +447,7 @@ public class HomeActivity extends Activity {
             sensorManager.registerListener(
                     sensorEventListener,
                     accelerometer,
-                    SensorManager.SENSOR_DELAY_NORMAL
+                    SensorManager.SENSOR_DELAY_GAME
             );
         }
     }
