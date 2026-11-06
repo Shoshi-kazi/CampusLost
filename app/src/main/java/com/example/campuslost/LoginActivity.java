@@ -1,3 +1,4 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
@@ -6,14 +7,14 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends Activity {
 
-    TextInputEditText etEmail, etPassword;
+    EditText etEmail, etPassword;
     CheckBox cbRemember;
     Button btnLogin, btnGoRegister;
     FirebaseAuth auth;
@@ -32,6 +33,7 @@ public class LoginActivity extends Activity {
         auth = FirebaseAuth.getInstance();
 
         btnLogin.setOnClickListener(v -> {
+
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString();
 
@@ -49,9 +51,11 @@ public class LoginActivity extends Activity {
 
             auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(task -> {
+
                         btnLogin.setEnabled(true);
 
                         if (task.isSuccessful()) {
+
                             SharedPreferences prefs =
                                     getSharedPreferences(
                                             "CampusLostPrefs",
@@ -68,15 +72,15 @@ public class LoginActivity extends Activity {
                                     "Login successful",
                                     Toast.LENGTH_SHORT).show();
 
-                            Intent intent =
-                                    new Intent(
-                                            LoginActivity.this,
-                                            HomeActivity.class);
+                            Intent intent = new Intent(
+                                    LoginActivity.this,
+                                    HomeActivity.class);
 
                             startActivity(intent);
                             finish();
 
                         } else {
+
                             Toast.makeText(
                                     this,
                                     "Login failed. Check your email and password.",
@@ -86,10 +90,10 @@ public class LoginActivity extends Activity {
         });
 
         btnGoRegister.setOnClickListener(v -> {
-            Intent intent =
-                    new Intent(
-                            LoginActivity.this,
-                            RegisterActivity.class);
+
+            Intent intent = new Intent(
+                    LoginActivity.this,
+                    RegisterActivity.class);
 
             startActivity(intent);
         });

@@ -9,8 +9,10 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.graphics.Color;
 import android.widget.Button;
 import android.widget.SearchView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -90,6 +92,20 @@ public class HomeActivity extends Activity {
         btnFound = findViewById(R.id.btnFound);
 
         searchView = findViewById(R.id.searchView);
+
+        // Make Search Text Black
+        int searchTextId = getResources().getIdentifier(
+                "search_src_text",
+                "id",
+                "android"
+        );
+
+        EditText searchTextView = searchView.findViewById(searchTextId);
+
+        if (searchTextView != null) {
+            searchTextView.setTextColor(Color.BLACK);
+            searchTextView.setHintTextColor(Color.GRAY);
+        }
 
         // Profile Button
         btnProfile = findViewById(R.id.btnProfile);

@@ -1,3 +1,4 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
@@ -65,8 +66,7 @@ public class ItemDetailsActivity extends Activity {
         itemId = getIntent().getStringExtra("itemId");
 
         if (itemId == null || itemId.isEmpty()) {
-            Toast.makeText(this,
-                    "Item not found",
+            Toast.makeText(this, "Item not found",
                     Toast.LENGTH_SHORT).show();
             finish();
             return;
@@ -76,7 +76,6 @@ public class ItemDetailsActivity extends Activity {
                 .getInstance("https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("lostItems");
 
-        // Hide buttons until ownership is confirmed
         btnEdit.setVisibility(View.GONE);
         btnDelete.setVisibility(View.GONE);
 
@@ -119,13 +118,19 @@ public class ItemDetailsActivity extends Activity {
                         contactNumber = item.getContactNumber();
                         timestamp = item.getTimestamp();
 
-                        tvDetailsTitle.setText(title != null ? title : "");
+                        tvDetailsTitle.setText(
+                                title != null ? title : "");
+
                         tvDetailsDescription.setText(
                                 description != null ? description : "");
+
                         tvDetailsLocation.setText(
-                                "Location: " + (location != null ? location : "Not available"));
+                                "Location: " +
+                                        (location != null ? location : "Not available"));
+
                         tvDetailsType.setText(
-                                "Status: " + (type != null ? type : "Not available"));
+                                "Status: " +
+                                        (type != null ? type : "Not available"));
 
                         tvDetailsPoster.setText(
                                 "Posted By: " +
@@ -158,9 +163,7 @@ public class ItemDetailsActivity extends Activity {
 
     private void checkItemOwnership() {
 
-        String currentUserId = FirebaseAuth
-                .getInstance()
-                .getUid();
+        String currentUserId = FirebaseAuth.getInstance().getUid();
 
         boolean isOwner = currentUserId != null
                 && currentUserId.equals(userId);

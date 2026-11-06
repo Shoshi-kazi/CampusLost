@@ -1,3 +1,4 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
@@ -29,10 +30,8 @@ public class RegisterActivity extends Activity {
 
     private Button btnRegister;
 
-    // Firebase Authentication
+    // Firebase
     private FirebaseAuth firebaseAuth;
-
-    // Firebase Realtime Database
     private DatabaseReference usersReference;
 
     @Override
@@ -56,16 +55,12 @@ public class RegisterActivity extends Activity {
 
         // Initialize Firebase Database
         usersReference = FirebaseDatabase
-                .getInstance(
-                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app"
-                )
+                .getInstance("https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("users");
 
-        // Register Button
         btnRegister.setOnClickListener(v -> registerStudent());
     }
 
-    // Register Student
     private void registerStudent() {
 
         // Get Student Information
@@ -76,44 +71,39 @@ public class RegisterActivity extends Activity {
 
         // Get Account Information
         String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        String password = etPassword.getText().toString();
 
-        // Validate Full Name
+        // Validation
         if (TextUtils.isEmpty(name)) {
             etName.setError("Enter your full name");
             etName.requestFocus();
             return;
         }
 
-        // Validate Department
         if (TextUtils.isEmpty(department)) {
             etDepartment.setError("Enter your department");
             etDepartment.requestFocus();
             return;
         }
 
-        // Validate Student ID
         if (TextUtils.isEmpty(studentId)) {
             etStudentId.setError("Student ID is required");
             etStudentId.requestFocus();
             return;
         }
 
-        // Validate Batch
         if (TextUtils.isEmpty(batch)) {
             etBatch.setError("Enter your batch");
             etBatch.requestFocus();
             return;
         }
 
-        // Validate Email
         if (TextUtils.isEmpty(email)) {
             etEmail.setError("Enter your email");
             etEmail.requestFocus();
             return;
         }
 
-        // Validate Password
         if (TextUtils.isEmpty(password)) {
             etPassword.setError("Enter your password");
             etPassword.requestFocus();
@@ -126,7 +116,7 @@ public class RegisterActivity extends Activity {
             return;
         }
 
-        // Disable Button During Registration
+        // Disable button during registration
         btnRegister.setEnabled(false);
         btnRegister.setText("Creating Account...");
 
@@ -136,16 +126,14 @@ public class RegisterActivity extends Activity {
 
                     if (task.isSuccessful()) {
 
-                        FirebaseUser currentUser =
-                                firebaseAuth.getCurrentUser();
+                        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
                         if (currentUser != null) {
 
                             String userId = currentUser.getUid();
 
                             // Prepare Student Profile Data
-                            HashMap<String, Object> studentProfile =
-                                    new HashMap<>();
+                            HashMap<String, Object> studentProfile = new HashMap<>();
 
                             studentProfile.put("name", name);
                             studentProfile.put("department", department);
@@ -166,7 +154,6 @@ public class RegisterActivity extends Activity {
                                                     Toast.LENGTH_LONG
                                             ).show();
 
-                                            // Open HomeActivity
                                             Intent intent = new Intent(
                                                     RegisterActivity.this,
                                                     HomeActivity.class
@@ -185,10 +172,13 @@ public class RegisterActivity extends Activity {
                                             btnRegister.setEnabled(true);
                                             btnRegister.setText("Register");
 
+                                            String error = databaseTask.getException() != null
+                                                    ? databaseTask.getException().getMessage()
+                                                    : "Unknown database error";
+
                                             Toast.makeText(
                                                     RegisterActivity.this,
-                                                    "Profile save failed: "
-                                                            + databaseTask.getException().getMessage(),
+                                                    "Profile save failed: " + error,
                                                     Toast.LENGTH_LONG
                                             ).show();
                                         }
@@ -211,10 +201,9 @@ public class RegisterActivity extends Activity {
                         btnRegister.setEnabled(true);
                         btnRegister.setText("Register");
 
-                        String errorMessage =
-                                task.getException() != null
-                                        ? task.getException().getMessage()
-                                        : "Registration failed";
+                        String errorMessage = task.getException() != null
+                                ? task.getException().getMessage()
+                                : "Registration failed";
 
                         Toast.makeText(
                                 RegisterActivity.this,

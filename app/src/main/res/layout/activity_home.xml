@@ -37,8 +37,7 @@
         android:queryHint="Search items..."
         android:iconifiedByDefault="false"
         android:background="#FFFFFF"
-        android:queryBackground="@android:color/transparent"
-        android:queryHintTextColor="#8491A0"/>
+        android:queryBackground="@android:color/transparent" />
 
     <!-- Profile Button -->
 
