@@ -54,9 +54,13 @@ public class HomeActivity extends Activity {
     private SensorEventListener sensorEventListener;
 
     private static final float SHAKE_THRESHOLD = 3.5f;
-    private static final long SHAKE_COOLDOWN = 2000;
 
+    // Three Shake Settings
+    private int shakeCount = 0;
     private long lastShakeTime = 0;
+
+    private static final long SHAKE_SEQUENCE_WINDOW = 2500;
+    private static final long SHAKE_EVENT_GAP = 350;
 
     // Gravity Filter
     private float gravityX = 0;
@@ -69,7 +73,6 @@ public class HomeActivity extends Activity {
 
     // CampusLost Voice Assistant
     private CampusLostVoiceAssistant voiceAssistant;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,7 +233,6 @@ public class HomeActivity extends Activity {
         initializeShakeSensor();
     }
 
-
     // Handle Voice Commands
     private void handleVoiceCommand(String command) {
 
@@ -294,7 +296,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-
     // Attach Firebase Real-time Listener
     private void loadItems() {
 
@@ -324,7 +325,6 @@ public class HomeActivity extends Activity {
         listenerAttached = true;
     }
 
-
     // Update RecyclerView Data
     private void updateItemList(DataSnapshot snapshot) {
 
@@ -344,7 +344,6 @@ public class HomeActivity extends Activity {
         applyFilters();
     }
 
-
     // Remove Firebase Listener
     private void removeFirebaseListener() {
 
@@ -358,7 +357,6 @@ public class HomeActivity extends Activity {
             valueEventListener = null;
         }
     }
-
 
     // Search and Filter Logic
     private void applyFilters() {
@@ -399,7 +397,6 @@ public class HomeActivity extends Activity {
 
         adapter.notifyDataSetChanged();
     }
-
 
     // Initialize Accelerometer Shake Sensor
     private void initializeShakeSensor() {
@@ -468,20 +465,42 @@ public class HomeActivity extends Activity {
 
                 long currentTime = System.currentTimeMillis();
 
-                if (shakeForce > SHAKE_THRESHOLD &&
-                        currentTime - lastShakeTime > SHAKE_COOLDOWN) {
+                // Detect three shakes
+                if (shakeForce > SHAKE_THRESHOLD) {
 
-                    lastShakeTime = currentTime;
+                    // Reset count if sequence takes too long
+                    if (currentTime - lastShakeTime > SHAKE_SEQUENCE_WINDOW) {
+                        shakeCount = 0;
+                    }
 
-                    Toast.makeText(
-                            HomeActivity.this,
-                            "Shake detected!",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    // Avoid counting the same shake repeatedly
+                    if (currentTime - lastShakeTime >= SHAKE_EVENT_GAP) {
 
-                    // Start Our Own Voice Assistant
-                    if (voiceAssistant != null) {
-                        voiceAssistant.startListening();
+                        shakeCount++;
+                        lastShakeTime = currentTime;
+
+                        Toast.makeText(
+                                HomeActivity.this,
+                                "Shake " + shakeCount + "/3",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        // Activate Voice Assistant after 3 shakes
+                        if (shakeCount >= 3) {
+
+                            shakeCount = 0;
+                            lastShakeTime = 0;
+
+                            Toast.makeText(
+                                    HomeActivity.this,
+                                    "Voice Assistant Activated!",
+                                    Toast.LENGTH_SHORT
+                            ).show();
+
+                            if (voiceAssistant != null) {
+                                voiceAssistant.startListening();
+                            }
+                        }
                     }
                 }
             }
@@ -495,7 +514,6 @@ public class HomeActivity extends Activity {
             }
         };
     }
-
 
     // Register Sensor when Activity Resumes
     @Override
@@ -514,7 +532,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-
     // Unregister Sensor when Activity Pauses
     @Override
     protected void onPause() {
@@ -526,7 +543,6 @@ public class HomeActivity extends Activity {
             sensorManager.unregisterListener(sensorEventListener);
         }
     }
-
 
     // Handle Microphone Permission Result
     @Override
@@ -550,7 +566,6 @@ public class HomeActivity extends Activity {
             );
         }
     }
-
 
     // Clean Up Resources
     @Override
