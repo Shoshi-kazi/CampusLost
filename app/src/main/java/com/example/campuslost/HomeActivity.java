@@ -224,35 +224,45 @@ public class HomeActivity extends Activity {
                 valueEventListener);
     }
 
+
     private void applyFilters() {
 
         displayedItems.clear();
 
         for (LostItem item : allItems) {
 
+            // Get item information
             String title = item.getTitle() == null
-                    ? ""
-                    : item.getTitle().toLowerCase();
+                    ? "" : item.getTitle().trim().toLowerCase();
+
+            String description = item.getDescription() == null
+                    ? "" : item.getDescription().trim().toLowerCase();
+
+            String location = item.getLocation() == null
+                    ? "" : item.getLocation().trim().toLowerCase();
 
             String type = item.getType() == null
-                    ? ""
-                    : item.getType();
+                    ? "" : item.getType().trim();
 
+            // Search in title, description and location
             boolean matchesSearch =
-                    title.contains(searchText);
+                    title.contains(searchText) ||
+                            description.contains(searchText) ||
+                            location.contains(searchText);
 
+            // Lost / Found filter
             boolean matchesFilter =
                     selectedFilter.equalsIgnoreCase("All") ||
                             type.equalsIgnoreCase(selectedFilter);
 
             if (matchesSearch && matchesFilter) {
-
                 displayedItems.add(item);
             }
         }
 
         adapter.notifyDataSetChanged();
     }
+
 
     @Override
     protected void onDestroy() {
