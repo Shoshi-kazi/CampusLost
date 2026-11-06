@@ -109,15 +109,25 @@ public class HomeActivity extends Activity {
         // Logout Button
         btnLogout.setOnClickListener(v -> {
 
+            // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
 
+            // Clear Remember Me preference
             SharedPreferences prefs =
                     getSharedPreferences(
                             "CampusLostPrefs",
                             MODE_PRIVATE);
 
-            prefs.edit().clear().apply();
+            prefs.edit()
+                    .putBoolean("remember_me", false)
+                    .apply();
 
+            Toast.makeText(
+                    HomeActivity.this,
+                    "Logged out successfully",
+                    Toast.LENGTH_SHORT).show();
+
+            // Return to Welcome screen
             Intent intent = new Intent(
                     HomeActivity.this,
                     MainActivityJava.class);
@@ -216,8 +226,7 @@ public class HomeActivity extends Activity {
                 Toast.makeText(
                         HomeActivity.this,
                         "Database Error: " + error.getMessage(),
-                        Toast.LENGTH_LONG
-                ).show();
+                        Toast.LENGTH_LONG).show();
             }
         };
 
@@ -226,7 +235,6 @@ public class HomeActivity extends Activity {
     }
 
     // Search and Filter Logic
-
     private void applyFilters() {
 
         displayedItems.clear();
@@ -255,6 +263,7 @@ public class HomeActivity extends Activity {
                             type.equals(selectedFilter.toLowerCase());
 
             if (matchesSearch && matchesFilter) {
+
                 displayedItems.add(item);
             }
         }
