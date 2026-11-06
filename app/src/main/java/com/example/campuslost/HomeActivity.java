@@ -226,46 +226,35 @@ public class HomeActivity extends Activity {
     }
 
     // Search and Filter Logic
+
     private void applyFilters() {
 
         displayedItems.clear();
 
         for (LostItem item : allItems) {
 
-            // Get Title
             String title = item.getTitle() == null
-                    ? ""
-                    : item.getTitle().trim().toLowerCase();
+                    ? "" : item.getTitle().trim().toLowerCase();
 
-            // Get Description
             String description = item.getDescription() == null
-                    ? ""
-                    : item.getDescription().trim().toLowerCase();
+                    ? "" : item.getDescription().trim().toLowerCase();
 
-            // Get Location
             String location = item.getLocation() == null
-                    ? ""
-                    : item.getLocation().trim().toLowerCase();
+                    ? "" : item.getLocation().trim().toLowerCase();
 
-            // Get Type
             String type = item.getType() == null
-                    ? ""
-                    : item.getType().trim();
+                    ? "" : item.getType().trim().toLowerCase();
 
-            // Search in Title, Description and Location
             boolean matchesSearch =
                     title.contains(searchText) ||
                             description.contains(searchText) ||
                             location.contains(searchText);
 
-            // All, Lost and Found Filter
             boolean matchesFilter =
                     selectedFilter.equalsIgnoreCase("All") ||
-                            type.equalsIgnoreCase(selectedFilter);
+                            type.equals(selectedFilter.toLowerCase());
 
-            // Add Matching Items
             if (matchesSearch && matchesFilter) {
-
                 displayedItems.add(item);
             }
         }
