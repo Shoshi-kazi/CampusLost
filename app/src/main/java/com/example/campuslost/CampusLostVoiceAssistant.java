@@ -3,12 +3,12 @@ package com.example.campuslost;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.content.Intent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.widget.Toast;
@@ -29,7 +29,6 @@ public class CampusLostVoiceAssistant {
 
     private boolean ttsReady = false;
 
-    // HomeActivity-কে recognized command পাঠানোর interface
     public interface VoiceAssistantListener {
         void onCommandRecognized(String command);
     }
@@ -47,42 +46,37 @@ public class CampusLostVoiceAssistant {
         initializeSpeechRecognizer();
     }
 
-    // Text-to-Speech তৈরি
+    // Initialize Text-to-Speech
     private void initializeTextToSpeech() {
 
-        textToSpeech = new TextToSpeech(
-                activity,
-                status -> {
+        textToSpeech = new TextToSpeech(activity, status -> {
 
-                    if (status == TextToSpeech.SUCCESS) {
+            if (status == TextToSpeech.SUCCESS) {
 
-                        int result = textToSpeech.setLanguage(
-                                Locale.US
-                        );
+                int result = textToSpeech.setLanguage(Locale.US);
 
-                        ttsReady =
-                                result != TextToSpeech.LANG_MISSING_DATA
-                                        && result != TextToSpeech.LANG_NOT_SUPPORTED;
+                ttsReady =
+                        result != TextToSpeech.LANG_MISSING_DATA
+                                && result != TextToSpeech.LANG_NOT_SUPPORTED;
 
-                    } else {
-                        Toast.makeText(
-                                activity,
-                                "Voice output is not available",
-                                Toast.LENGTH_SHORT
-                        ).show();
-                    }
-                }
-        );
+            } else {
+                Toast.makeText(
+                        activity,
+                        "Voice output unavailable",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
     }
 
-    // Speech Recognizer তৈরি
+    // Initialize Speech Recognizer
     private void initializeSpeechRecognizer() {
 
         if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
 
             Toast.makeText(
                     activity,
-                    "Speech recognition is not available",
+                    "Speech recognition unavailable",
                     Toast.LENGTH_LONG
             ).show();
 
@@ -118,7 +112,13 @@ public class CampusLostVoiceAssistant {
                     @Override
                     public void onError(int error) {
 
-                        speak("Sorry, I could not understand. Please try again.");
+                        Toast.makeText(
+                                activity,
+                                "Could not recognize speech. Try shaking again.",
+                                Toast.LENGTH_SHORT
+                        ).show();
+
+                        // Do not automatically restart listening
                     }
 
                     @Override
@@ -138,7 +138,12 @@ public class CampusLostVoiceAssistant {
                             }
 
                         } else {
-                            speak("I could not understand your command.");
+
+                            Toast.makeText(
+                                    activity,
+                                    "No command recognized",
+                                    Toast.LENGTH_SHORT
+                            ).show();
                         }
                     }
 
@@ -153,7 +158,7 @@ public class CampusLostVoiceAssistant {
         );
     }
 
-    // Assistant চালু করা
+    // Start Assistant
     public void startListening() {
 
         if (ContextCompat.checkSelfPermission(
@@ -173,10 +178,9 @@ public class CampusLostVoiceAssistant {
         }
 
         if (speechRecognizer == null) {
-
             Toast.makeText(
                     activity,
-                    "Speech recognition is unavailable",
+                    "Speech recognition unavailable",
                     Toast.LENGTH_SHORT
             ).show();
 
@@ -186,13 +190,20 @@ public class CampusLostVoiceAssistant {
         speakAndListen();
     }
 
-    // প্রথমে কথা বলবে, তারপর শুনবে
+    // Speak greeting, then listen once
     private void speakAndListen() {
 
         if (!ttsReady) {
             startSpeechRecognition();
             return;
         }
+
+        textToSpeech.speak(
+                "Hello! How can I help you?",
+                TextToSpeech.QUEUE_FLUSH,
+                null,
+                "assistant_greeting"
+        );
 
         textToSpeech.setOnUtteranceProgressListener(
                 new UtteranceProgressListener() {
@@ -204,9 +215,13 @@ public class CampusLostVoiceAssistant {
                     @Override
                     public void onDone(String utteranceId) {
 
-                        activity.runOnUiThread(
-                                () -> startSpeechRecognition()
-                        );
+                        // Only greeting completion starts listening
+                        if ("assistant_greeting".equals(utteranceId)) {
+
+                            activity.runOnUiThread(
+                                    () -> startSpeechRecognition()
+                            );
+                        }
                     }
 
                     @Override
@@ -214,16 +229,9 @@ public class CampusLostVoiceAssistant {
                     }
                 }
         );
-
-        textToSpeech.speak(
-                "Hello! How can I help you?",
-                TextToSpeech.QUEUE_FLUSH,
-                null,
-                "assistant_greeting"
-        );
     }
 
-    // Microphone listening শুরু
+    // Start microphone listening
     private void startSpeechRecognition() {
 
         if (speechRecognizer == null) {
@@ -252,7 +260,7 @@ public class CampusLostVoiceAssistant {
         speechRecognizer.startListening(intent);
     }
 
-    // Permission result HomeActivity থেকে গ্রহণ
+    // Handle Microphone Permission
     public void onPermissionResult(
             int requestCode,
             int[] grantResults
@@ -260,8 +268,8 @@ public class CampusLostVoiceAssistant {
 
         if (requestCode == REQUEST_AUDIO_PERMISSION) {
 
-            if (grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults.length > 0 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                 speakAndListen();
 
@@ -276,7 +284,7 @@ public class CampusLostVoiceAssistant {
         }
     }
 
-    // Assistant-এর voice response
+    // Speak Response
     public void speak(String message) {
 
         if (textToSpeech != null && ttsReady) {
@@ -290,10 +298,11 @@ public class CampusLostVoiceAssistant {
         }
     }
 
-    // Resource বন্ধ করা
+    // Destroy Resources
     public void destroy() {
 
         if (speechRecognizer != null) {
+            speechRecognizer.cancel();
             speechRecognizer.destroy();
             speechRecognizer = null;
         }

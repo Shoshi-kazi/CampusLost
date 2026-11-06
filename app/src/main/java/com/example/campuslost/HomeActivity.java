@@ -2,7 +2,6 @@
 package com.example.campuslost;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
@@ -67,6 +66,10 @@ public class HomeActivity extends Activity {
     private boolean firstSensorReading = true;
 
     private static final float GRAVITY_ALPHA = 0.8f;
+
+    // CampusLost Voice Assistant
+    private CampusLostVoiceAssistant voiceAssistant;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,12 +217,83 @@ public class HomeActivity extends Activity {
             applyFilters();
         });
 
+        // Initialize CampusLost Voice Assistant
+        voiceAssistant = new CampusLostVoiceAssistant(
+                this,
+                this::handleVoiceCommand
+        );
+
         // Firebase Real-time Listener
         loadItems();
 
         // Initialize Shake Sensor
         initializeShakeSensor();
     }
+
+
+    // Handle Voice Commands
+    private void handleVoiceCommand(String command) {
+
+        if (command == null || command.trim().isEmpty()) {
+
+            voiceAssistant.speak(
+                    "I could not understand your command."
+            );
+
+            return;
+        }
+
+        String input = command.toLowerCase(Locale.ROOT).trim();
+
+        // Show Lost Items
+        if (input.contains("lost")) {
+
+            selectedFilter = "Lost";
+            applyFilters();
+
+            voiceAssistant.speak("Showing lost items.");
+        }
+
+        // Show Found Items
+        else if (input.contains("found")) {
+
+            selectedFilter = "Found";
+            applyFilters();
+
+            voiceAssistant.speak("Showing found items.");
+        }
+
+        // Show All Items
+        else if (input.contains("all")) {
+
+            selectedFilter = "All";
+            applyFilters();
+
+            voiceAssistant.speak("Showing all items.");
+        }
+
+        // Open Add Item Screen
+        else if (input.contains("add")) {
+
+            voiceAssistant.speak("Opening add item.");
+
+            Intent intent = new Intent(
+                    HomeActivity.this,
+                    AddItemActivity.class
+            );
+
+            startActivity(intent);
+        }
+
+        // Unknown Command
+        else {
+
+            voiceAssistant.speak(
+                    "Sorry, I don't know that command."
+            );
+        }
+    }
+
 
     // Attach Firebase Real-time Listener
     private void loadItems() {
@@ -250,6 +324,7 @@ public class HomeActivity extends Activity {
         listenerAttached = true;
     }
 
+
     // Update RecyclerView Data
     private void updateItemList(DataSnapshot snapshot) {
 
@@ -269,6 +344,7 @@ public class HomeActivity extends Activity {
         applyFilters();
     }
 
+
     // Remove Firebase Listener
     private void removeFirebaseListener() {
 
@@ -282,6 +358,7 @@ public class HomeActivity extends Activity {
             valueEventListener = null;
         }
     }
+
 
     // Search and Filter Logic
     private void applyFilters() {
@@ -322,6 +399,7 @@ public class HomeActivity extends Activity {
 
         adapter.notifyDataSetChanged();
     }
+
 
     // Initialize Accelerometer Shake Sensor
     private void initializeShakeSensor() {
@@ -401,7 +479,10 @@ public class HomeActivity extends Activity {
                             Toast.LENGTH_SHORT
                     ).show();
 
-                    openVoiceAssistant();
+                    // Start Our Own Voice Assistant
+                    if (voiceAssistant != null) {
+                        voiceAssistant.startListening();
+                    }
                 }
             }
 
@@ -415,26 +496,7 @@ public class HomeActivity extends Activity {
         };
     }
 
-    // Open Android Voice Assistant
-    private void openVoiceAssistant() {
-        try {
-            Intent intent = new Intent(Intent.ACTION_ASSIST);
-            startActivity(intent);
 
-        } catch (Exception e) {
-            try {
-                Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
-                startActivity(intent);
-
-            } catch (Exception error) {
-                Toast.makeText(
-                        this,
-                        "Voice Assistant could not open",
-                        Toast.LENGTH_LONG
-                ).show();
-            }
-        }
-    }
     // Register Sensor when Activity Resumes
     @Override
     protected void onResume() {
@@ -452,6 +514,7 @@ public class HomeActivity extends Activity {
         }
     }
 
+
     // Unregister Sensor when Activity Pauses
     @Override
     protected void onPause() {
@@ -464,11 +527,41 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Clean up Firebase Listener
+
+    // Handle Microphone Permission Result
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode,
+            String[] permissions,
+            int[] grantResults
+    ) {
+
+        super.onRequestPermissionsResult(
+                requestCode,
+                permissions,
+                grantResults
+        );
+
+        if (voiceAssistant != null) {
+
+            voiceAssistant.onPermissionResult(
+                    requestCode,
+                    grantResults
+            );
+        }
+    }
+
+
+    // Clean Up Resources
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
         removeFirebaseListener();
+
+        if (voiceAssistant != null) {
+            voiceAssistant.destroy();
+            voiceAssistant = null;
+        }
     }
 }
