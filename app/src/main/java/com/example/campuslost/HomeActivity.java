@@ -2,6 +2,7 @@
 package com.example.campuslost;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
@@ -30,22 +31,18 @@ public class HomeActivity extends Activity {
 
     // UI Components
     RecyclerView recyclerView;
-
     Button btnAddItem, btnLogout;
     Button btnAll, btnLost, btnFound;
-
     SearchView searchView;
 
     // Item Lists
     ArrayList<LostItem> allItems;
     ArrayList<LostItem> displayedItems;
-
     LostItemAdapter adapter;
 
     // Firebase
     DatabaseReference databaseReference;
     ValueEventListener valueEventListener;
-
     private boolean listenerAttached = false;
 
     // Search and Filter
@@ -58,14 +55,12 @@ public class HomeActivity extends Activity {
     private SensorEventListener sensorEventListener;
 
     private static final float SHAKE_THRESHOLD = 15.0f;
-    private static final long SHAKE_COOLDOWN = 1500;
-
+    private static final long SHAKE_COOLDOWN = 2000;
     private long lastShakeTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_home);
 
         // Initialize Views
@@ -134,18 +129,14 @@ public class HomeActivity extends Activity {
         // Logout Button
         btnLogout.setOnClickListener(v -> {
 
-            // Remove Firebase Listener
             removeFirebaseListener();
 
-            // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
 
-            // Reset Remember Me
-            SharedPreferences prefs =
-                    getSharedPreferences(
-                            "CampusLostPrefs",
-                            MODE_PRIVATE
-                    );
+            SharedPreferences prefs = getSharedPreferences(
+                    "CampusLostPrefs",
+                    MODE_PRIVATE
+            );
 
             prefs.edit()
                     .putBoolean("remember_me", false)
@@ -157,7 +148,6 @@ public class HomeActivity extends Activity {
                     Toast.LENGTH_SHORT
             ).show();
 
-            // Return to Welcome Screen
             Intent intent = new Intent(
                     HomeActivity.this,
                     MainActivityJava.class
@@ -169,7 +159,6 @@ public class HomeActivity extends Activity {
             );
 
             startActivity(intent);
-
             finish();
         });
 
@@ -181,7 +170,6 @@ public class HomeActivity extends Activity {
                     public boolean onQueryTextSubmit(String query) {
 
                         searchText = query.trim().toLowerCase(Locale.ROOT);
-
                         applyFilters();
 
                         return true;
@@ -191,7 +179,6 @@ public class HomeActivity extends Activity {
                     public boolean onQueryTextChange(String newText) {
 
                         searchText = newText.trim().toLowerCase(Locale.ROOT);
-
                         applyFilters();
 
                         return true;
@@ -201,62 +188,41 @@ public class HomeActivity extends Activity {
 
         // All Filter
         btnAll.setOnClickListener(v -> {
-
             selectedFilter = "All";
-
             applyFilters();
         });
 
         // Lost Filter
         btnLost.setOnClickListener(v -> {
-
             selectedFilter = "Lost";
-
             applyFilters();
         });
 
         // Found Filter
         btnFound.setOnClickListener(v -> {
-
             selectedFilter = "Found";
-
             applyFilters();
         });
 
-        // Load Firebase Items
+        // Attach Firebase Real-time Listener
         loadItems();
 
         // Initialize Shake Sensor
         initializeShakeSensor();
     }
 
-    // Load Items from Firebase
+    // Attach Firebase Real-time Listener
     private void loadItems() {
 
-        // Prevent duplicate Firebase listeners
-        removeFirebaseListener();
+        if (listenerAttached || databaseReference == null) {
+            return;
+        }
 
         valueEventListener = new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-
-                allItems.clear();
-
-                for (DataSnapshot data : snapshot.getChildren()) {
-
-                    LostItem item =
-                            data.getValue(LostItem.class);
-
-                    if (item != null) {
-
-                        item.setItemId(data.getKey());
-
-                        allItems.add(item);
-                    }
-                }
-
-                applyFilters();
+                updateItemList(snapshot);
             }
 
             @Override
@@ -270,11 +236,27 @@ public class HomeActivity extends Activity {
             }
         };
 
-        databaseReference.addValueEventListener(
-                valueEventListener
-        );
-
+        databaseReference.addValueEventListener(valueEventListener);
         listenerAttached = true;
+    }
+
+    // Update RecyclerView Data
+    private void updateItemList(DataSnapshot snapshot) {
+
+        allItems.clear();
+
+        for (DataSnapshot data : snapshot.getChildren()) {
+
+            LostItem item = data.getValue(LostItem.class);
+
+            if (item != null) {
+
+                item.setItemId(data.getKey());
+                allItems.add(item);
+            }
+        }
+
+        applyFilters();
     }
 
     // Remove Firebase Listener
@@ -284,9 +266,7 @@ public class HomeActivity extends Activity {
                 valueEventListener != null &&
                 databaseReference != null) {
 
-            databaseReference.removeEventListener(
-                    valueEventListener
-            );
+            databaseReference.removeEventListener(valueEventListener);
 
             listenerAttached = false;
             valueEventListener = null;
@@ -326,7 +306,6 @@ public class HomeActivity extends Activity {
                             type.equals(selectedFilter.toLowerCase(Locale.ROOT));
 
             if (matchesSearch && matchesFilter) {
-
                 displayedItems.add(item);
             }
         }
@@ -378,14 +357,8 @@ public class HomeActivity extends Activity {
 
                     lastShakeTime = currentTime;
 
-                    // Refresh Firebase Items
-                    loadItems();
-
-                    Toast.makeText(
-                            HomeActivity.this,
-                            "Refreshing items...",
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    // Launch Voice Assistant
+                    openVoiceAssistant();
                 }
             }
 
@@ -399,7 +372,48 @@ public class HomeActivity extends Activity {
         };
     }
 
-    // Register Sensor when Activity resumes
+    // Open Android Voice Assistant
+    private void openVoiceAssistant() {
+
+        try {
+
+            Intent voiceIntent = new Intent(
+                    Intent.ACTION_VOICE_COMMAND
+            );
+
+            startActivity(voiceIntent);
+
+        } catch (ActivityNotFoundException e) {
+
+            // Try Android Assistant as a fallback
+            try {
+
+                Intent assistIntent = new Intent(
+                        Intent.ACTION_ASSIST
+                );
+
+                startActivity(assistIntent);
+
+            } catch (ActivityNotFoundException | SecurityException error) {
+
+                Toast.makeText(
+                        HomeActivity.this,
+                        "Voice Assistant is not available",
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+
+        } catch (SecurityException e) {
+
+            Toast.makeText(
+                    HomeActivity.this,
+                    "Cannot open Voice Assistant",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    // Register Sensor when Activity Resumes
     @Override
     protected void onResume() {
         super.onResume();
@@ -416,7 +430,7 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Unregister Sensor when Activity pauses
+    // Unregister Sensor when Activity Pauses
     @Override
     protected void onPause() {
         super.onPause();
@@ -424,9 +438,7 @@ public class HomeActivity extends Activity {
         if (sensorManager != null &&
                 sensorEventListener != null) {
 
-            sensorManager.unregisterListener(
-                    sensorEventListener
-            );
+            sensorManager.unregisterListener(sensorEventListener);
         }
     }
 
