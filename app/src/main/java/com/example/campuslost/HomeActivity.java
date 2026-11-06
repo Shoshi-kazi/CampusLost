@@ -1,3 +1,4 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
@@ -35,7 +36,6 @@ public class HomeActivity extends Activity {
     LostItemAdapter adapter;
 
     DatabaseReference databaseReference;
-
     ValueEventListener valueEventListener;
 
     String selectedFilter = "All";
@@ -47,6 +47,7 @@ public class HomeActivity extends Activity {
 
         setContentView(R.layout.activity_home);
 
+        // Initialize Views
         recyclerView = findViewById(R.id.recyclerView);
 
         btnAddItem = findViewById(R.id.btnAddItem);
@@ -58,9 +59,11 @@ public class HomeActivity extends Activity {
 
         searchView = findViewById(R.id.searchView);
 
+        // Initialize Lists
         allItems = new ArrayList<>();
         displayedItems = new ArrayList<>();
 
+        // RecyclerView Setup
         adapter = new LostItemAdapter(displayedItems);
 
         recyclerView.setLayoutManager(
@@ -68,6 +71,7 @@ public class HomeActivity extends Activity {
 
         recyclerView.setAdapter(adapter);
 
+        // Item Click - Open Details
         adapter.setOnItemClickListener(item -> {
 
             Intent intent = new Intent(
@@ -86,13 +90,13 @@ public class HomeActivity extends Activity {
             startActivity(intent);
         });
 
+        // Firebase Database Connection
         databaseReference = FirebaseDatabase
                 .getInstance(
                         "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("lostItems");
 
-        // Add Item
-
+        // Add Item Button
         btnAddItem.setOnClickListener(v -> {
 
             Intent intent = new Intent(
@@ -102,8 +106,7 @@ public class HomeActivity extends Activity {
             startActivity(intent);
         });
 
-        // Logout
-
+        // Logout Button
         btnLogout.setOnClickListener(v -> {
 
             FirebaseAuth.getInstance().signOut();
@@ -128,15 +131,14 @@ public class HomeActivity extends Activity {
             finish();
         });
 
-        // Search
-
+        // Search Functionality
         searchView.setOnQueryTextListener(
                 new SearchView.OnQueryTextListener() {
 
                     @Override
                     public boolean onQueryTextSubmit(String query) {
 
-                        searchText = query.toLowerCase().trim();
+                        searchText = query.trim().toLowerCase();
 
                         applyFilters();
 
@@ -146,7 +148,7 @@ public class HomeActivity extends Activity {
                     @Override
                     public boolean onQueryTextChange(String newText) {
 
-                        searchText = newText.toLowerCase().trim();
+                        searchText = newText.trim().toLowerCase();
 
                         applyFilters();
 
@@ -155,7 +157,6 @@ public class HomeActivity extends Activity {
                 });
 
         // All Filter
-
         btnAll.setOnClickListener(v -> {
 
             selectedFilter = "All";
@@ -164,7 +165,6 @@ public class HomeActivity extends Activity {
         });
 
         // Lost Filter
-
         btnLost.setOnClickListener(v -> {
 
             selectedFilter = "Lost";
@@ -173,7 +173,6 @@ public class HomeActivity extends Activity {
         });
 
         // Found Filter
-
         btnFound.setOnClickListener(v -> {
 
             selectedFilter = "Found";
@@ -181,9 +180,11 @@ public class HomeActivity extends Activity {
             applyFilters();
         });
 
+        // Load Firebase Items
         loadItems();
     }
 
+    // Load Items from Firebase
     private void loadItems() {
 
         valueEventListener = new ValueEventListener() {
@@ -214,7 +215,7 @@ public class HomeActivity extends Activity {
 
                 Toast.makeText(
                         HomeActivity.this,
-                        "Database error: " + error.getMessage(),
+                        "Database Error: " + error.getMessage(),
                         Toast.LENGTH_LONG
                 ).show();
             }
@@ -224,38 +225,47 @@ public class HomeActivity extends Activity {
                 valueEventListener);
     }
 
-
+    // Search and Filter Logic
     private void applyFilters() {
 
         displayedItems.clear();
 
         for (LostItem item : allItems) {
 
-            // Get item information
+            // Get Title
             String title = item.getTitle() == null
-                    ? "" : item.getTitle().trim().toLowerCase();
+                    ? ""
+                    : item.getTitle().trim().toLowerCase();
 
+            // Get Description
             String description = item.getDescription() == null
-                    ? "" : item.getDescription().trim().toLowerCase();
+                    ? ""
+                    : item.getDescription().trim().toLowerCase();
 
+            // Get Location
             String location = item.getLocation() == null
-                    ? "" : item.getLocation().trim().toLowerCase();
+                    ? ""
+                    : item.getLocation().trim().toLowerCase();
 
+            // Get Type
             String type = item.getType() == null
-                    ? "" : item.getType().trim();
+                    ? ""
+                    : item.getType().trim();
 
-            // Search in title, description and location
+            // Search in Title, Description and Location
             boolean matchesSearch =
                     title.contains(searchText) ||
                             description.contains(searchText) ||
                             location.contains(searchText);
 
-            // Lost / Found filter
+            // All, Lost and Found Filter
             boolean matchesFilter =
                     selectedFilter.equalsIgnoreCase("All") ||
                             type.equalsIgnoreCase(selectedFilter);
 
+            // Add Matching Items
             if (matchesSearch && matchesFilter) {
+
                 displayedItems.add(item);
             }
         }
@@ -263,7 +273,7 @@ public class HomeActivity extends Activity {
         adapter.notifyDataSetChanged();
     }
 
-
+    // Remove Firebase Listener
     @Override
     protected void onDestroy() {
 
