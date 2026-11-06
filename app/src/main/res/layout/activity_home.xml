@@ -32,6 +32,13 @@
         android:queryHint="Search items..."
         android:iconifiedByDefault="false"/>
 
+    <Button
+        android:id="@+id/btnProfile"
+        android:layout_width="396dp"
+        android:layout_height="wrap_content"
+        android:text="My Profile"
+        android:textAllCaps="false" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
