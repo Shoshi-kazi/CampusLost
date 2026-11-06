@@ -4,6 +4,10 @@ package com.example.campuslost;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.SearchView;
@@ -20,9 +24,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class HomeActivity extends Activity {
 
+    // UI Components
     RecyclerView recyclerView;
 
     Button btnAddItem, btnLogout;
@@ -30,16 +36,31 @@ public class HomeActivity extends Activity {
 
     SearchView searchView;
 
+    // Item Lists
     ArrayList<LostItem> allItems;
     ArrayList<LostItem> displayedItems;
 
     LostItemAdapter adapter;
 
+    // Firebase
     DatabaseReference databaseReference;
     ValueEventListener valueEventListener;
 
+    private boolean listenerAttached = false;
+
+    // Search and Filter
     String selectedFilter = "All";
     String searchText = "";
+
+    // Shake Sensor
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private SensorEventListener sensorEventListener;
+
+    private static final float SHAKE_THRESHOLD = 15.0f;
+    private static final long SHAKE_COOLDOWN = 1500;
+
+    private long lastShakeTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +88,8 @@ public class HomeActivity extends Activity {
         adapter = new LostItemAdapter(displayedItems);
 
         recyclerView.setLayoutManager(
-                new LinearLayoutManager(this));
+                new LinearLayoutManager(this)
+        );
 
         recyclerView.setAdapter(adapter);
 
@@ -76,7 +98,8 @@ public class HomeActivity extends Activity {
 
             Intent intent = new Intent(
                     HomeActivity.this,
-                    ItemDetailsActivity.class);
+                    ItemDetailsActivity.class
+            );
 
             intent.putExtra("itemId", item.getItemId());
             intent.putExtra("title", item.getTitle());
@@ -93,7 +116,8 @@ public class HomeActivity extends Activity {
         // Firebase Database Connection
         databaseReference = FirebaseDatabase
                 .getInstance(
-                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
+                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app"
+                )
                 .getReference("lostItems");
 
         // Add Item Button
@@ -101,7 +125,8 @@ public class HomeActivity extends Activity {
 
             Intent intent = new Intent(
                     HomeActivity.this,
-                    AddItemActivity.class);
+                    AddItemActivity.class
+            );
 
             startActivity(intent);
         });
@@ -109,14 +134,18 @@ public class HomeActivity extends Activity {
         // Logout Button
         btnLogout.setOnClickListener(v -> {
 
+            // Remove Firebase Listener
+            removeFirebaseListener();
+
             // Sign out from Firebase
             FirebaseAuth.getInstance().signOut();
 
-            // Clear Remember Me preference
+            // Reset Remember Me
             SharedPreferences prefs =
                     getSharedPreferences(
                             "CampusLostPrefs",
-                            MODE_PRIVATE);
+                            MODE_PRIVATE
+                    );
 
             prefs.edit()
                     .putBoolean("remember_me", false)
@@ -125,16 +154,19 @@ public class HomeActivity extends Activity {
             Toast.makeText(
                     HomeActivity.this,
                     "Logged out successfully",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
 
-            // Return to Welcome screen
+            // Return to Welcome Screen
             Intent intent = new Intent(
                     HomeActivity.this,
-                    MainActivityJava.class);
+                    MainActivityJava.class
+            );
 
             intent.setFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK |
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+            );
 
             startActivity(intent);
 
@@ -148,7 +180,7 @@ public class HomeActivity extends Activity {
                     @Override
                     public boolean onQueryTextSubmit(String query) {
 
-                        searchText = query.trim().toLowerCase();
+                        searchText = query.trim().toLowerCase(Locale.ROOT);
 
                         applyFilters();
 
@@ -158,13 +190,14 @@ public class HomeActivity extends Activity {
                     @Override
                     public boolean onQueryTextChange(String newText) {
 
-                        searchText = newText.trim().toLowerCase();
+                        searchText = newText.trim().toLowerCase(Locale.ROOT);
 
                         applyFilters();
 
                         return true;
                     }
-                });
+                }
+        );
 
         // All Filter
         btnAll.setOnClickListener(v -> {
@@ -192,10 +225,16 @@ public class HomeActivity extends Activity {
 
         // Load Firebase Items
         loadItems();
+
+        // Initialize Shake Sensor
+        initializeShakeSensor();
     }
 
     // Load Items from Firebase
     private void loadItems() {
+
+        // Prevent duplicate Firebase listeners
+        removeFirebaseListener();
 
         valueEventListener = new ValueEventListener() {
 
@@ -226,12 +265,32 @@ public class HomeActivity extends Activity {
                 Toast.makeText(
                         HomeActivity.this,
                         "Database Error: " + error.getMessage(),
-                        Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_LONG
+                ).show();
             }
         };
 
         databaseReference.addValueEventListener(
-                valueEventListener);
+                valueEventListener
+        );
+
+        listenerAttached = true;
+    }
+
+    // Remove Firebase Listener
+    private void removeFirebaseListener() {
+
+        if (listenerAttached &&
+                valueEventListener != null &&
+                databaseReference != null) {
+
+            databaseReference.removeEventListener(
+                    valueEventListener
+            );
+
+            listenerAttached = false;
+            valueEventListener = null;
+        }
     }
 
     // Search and Filter Logic
@@ -242,16 +301,20 @@ public class HomeActivity extends Activity {
         for (LostItem item : allItems) {
 
             String title = item.getTitle() == null
-                    ? "" : item.getTitle().trim().toLowerCase();
+                    ? ""
+                    : item.getTitle().trim().toLowerCase(Locale.ROOT);
 
             String description = item.getDescription() == null
-                    ? "" : item.getDescription().trim().toLowerCase();
+                    ? ""
+                    : item.getDescription().trim().toLowerCase(Locale.ROOT);
 
             String location = item.getLocation() == null
-                    ? "" : item.getLocation().trim().toLowerCase();
+                    ? ""
+                    : item.getLocation().trim().toLowerCase(Locale.ROOT);
 
             String type = item.getType() == null
-                    ? "" : item.getType().trim().toLowerCase();
+                    ? ""
+                    : item.getType().trim().toLowerCase(Locale.ROOT);
 
             boolean matchesSearch =
                     title.contains(searchText) ||
@@ -260,7 +323,7 @@ public class HomeActivity extends Activity {
 
             boolean matchesFilter =
                     selectedFilter.equalsIgnoreCase("All") ||
-                            type.equals(selectedFilter.toLowerCase());
+                            type.equals(selectedFilter.toLowerCase(Locale.ROOT));
 
             if (matchesSearch && matchesFilter) {
 
@@ -271,17 +334,107 @@ public class HomeActivity extends Activity {
         adapter.notifyDataSetChanged();
     }
 
-    // Remove Firebase Listener
+    // Initialize Accelerometer Shake Sensor
+    private void initializeShakeSensor() {
+
+        sensorManager = (SensorManager)
+                getSystemService(SENSOR_SERVICE);
+
+        if (sensorManager != null) {
+
+            accelerometer = sensorManager.getDefaultSensor(
+                    Sensor.TYPE_ACCELEROMETER
+            );
+        }
+
+        if (accelerometer == null) {
+
+            Toast.makeText(
+                    this,
+                    "Accelerometer not available",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        sensorEventListener = new SensorEventListener() {
+
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+
+                float x = event.values[0];
+                float y = event.values[1];
+                float z = event.values[2];
+
+                double acceleration = Math.sqrt(
+                        x * x + y * y + z * z
+                );
+
+                long currentTime = System.currentTimeMillis();
+
+                if (acceleration > SHAKE_THRESHOLD &&
+                        currentTime - lastShakeTime > SHAKE_COOLDOWN) {
+
+                    lastShakeTime = currentTime;
+
+                    // Refresh Firebase Items
+                    loadItems();
+
+                    Toast.makeText(
+                            HomeActivity.this,
+                            "Refreshing items...",
+                            Toast.LENGTH_SHORT
+                    ).show();
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(
+                    Sensor sensor,
+                    int accuracy
+            ) {
+                // No action needed
+            }
+        };
+    }
+
+    // Register Sensor when Activity resumes
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (sensorManager != null &&
+                accelerometer != null &&
+                sensorEventListener != null) {
+
+            sensorManager.registerListener(
+                    sensorEventListener,
+                    accelerometer,
+                    SensorManager.SENSOR_DELAY_NORMAL
+            );
+        }
+    }
+
+    // Unregister Sensor when Activity pauses
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if (sensorManager != null &&
+                sensorEventListener != null) {
+
+            sensorManager.unregisterListener(
+                    sensorEventListener
+            );
+        }
+    }
+
+    // Clean up Firebase Listener
     @Override
     protected void onDestroy() {
-
         super.onDestroy();
 
-        if (valueEventListener != null &&
-                databaseReference != null) {
-
-            databaseReference.removeEventListener(
-                    valueEventListener);
-        }
+        removeFirebaseListener();
     }
 }
