@@ -25,19 +25,27 @@
         android:textColor="#666666"
         android:padding="8dp"/>
 
+    <!-- Search Bar -->
+
     <SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:queryHint="Search items..."
-        android:iconifiedByDefault="false"/>
+        android:iconifiedByDefault="false"
+        android:background="#FFFFFF"
+        android:queryBackground="@android:color/transparent"/>
+
+    <!-- Profile Button -->
 
     <Button
         android:id="@+id/btnProfile"
-        android:layout_width="396dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="My Profile"
-        android:textAllCaps="false" />
+        android:textAllCaps="false"/>
+
+    <!-- Filter Buttons -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -68,6 +76,8 @@
 
     </LinearLayout>
 
+    <!-- Add Item Button -->
+
     <Button
         android:id="@+id/btnAddItem"
         android:layout_width="match_parent"
@@ -75,12 +85,16 @@
         android:text="+ Add Lost Item"
         android:layout_marginTop="8dp"/>
 
+    <!-- Lost and Found Items -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:paddingTop="8dp"/>
+
+    <!-- Logout Button -->
 
     <Button
         android:id="@+id/btnLogout"
