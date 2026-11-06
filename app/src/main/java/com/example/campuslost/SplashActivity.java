@@ -12,7 +12,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class SplashActivity extends Activity {
 
-    private static final int SPLASH_DELAY = 1500;
+    private static final int SPLASH_DELAY = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +22,7 @@ public class SplashActivity extends Activity {
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
+            // Read Remember Me preference
             SharedPreferences prefs =
                     getSharedPreferences(
                             "CampusLostPrefs",
@@ -31,9 +32,13 @@ public class SplashActivity extends Activity {
             boolean remember =
                     prefs.getBoolean("remember_me", false);
 
-            if (remember &&
-                    FirebaseAuth.getInstance().getCurrentUser() != null) {
+            // Check Firebase login status
+            boolean isLoggedIn =
+                    FirebaseAuth.getInstance().getCurrentUser() != null;
 
+            if (remember && isLoggedIn) {
+
+                // Open Home Screen
                 Intent intent = new Intent(
                         SplashActivity.this,
                         HomeActivity.class
@@ -43,6 +48,7 @@ public class SplashActivity extends Activity {
 
             } else {
 
+                // Open Welcome Screen
                 Intent intent = new Intent(
                         SplashActivity.this,
                         MainActivityJava.class
