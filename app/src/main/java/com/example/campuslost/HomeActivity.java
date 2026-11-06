@@ -30,7 +30,7 @@ public class HomeActivity extends Activity {
 
     // UI Components
     RecyclerView recyclerView;
-    Button btnAddItem, btnLogout;
+    Button btnAddItem, btnLogout, btnProfile;
     Button btnAll, btnLost, btnFound;
     SearchView searchView;
 
@@ -71,7 +71,7 @@ public class HomeActivity extends Activity {
 
     private static final float GRAVITY_ALPHA = 0.8f;
 
-    // CampusLost Voice Assistant
+    // Voice Assistant
     private CampusLostVoiceAssistant voiceAssistant;
 
     @Override
@@ -90,6 +90,17 @@ public class HomeActivity extends Activity {
         btnFound = findViewById(R.id.btnFound);
 
         searchView = findViewById(R.id.searchView);
+
+        // Profile Button
+        btnProfile = findViewById(R.id.btnProfile);
+
+        btnProfile.setOnClickListener(v -> {
+            Intent intent = new Intent(
+                    HomeActivity.this,
+                    ProfileActivity.class
+            );
+            startActivity(intent);
+        });
 
         // Initialize Lists
         allItems = new ArrayList<>();
@@ -220,7 +231,7 @@ public class HomeActivity extends Activity {
             applyFilters();
         });
 
-        // Initialize CampusLost Voice Assistant
+        // Initialize Voice Assistant
         voiceAssistant = new CampusLostVoiceAssistant(
                 this,
                 this::handleVoiceCommand
@@ -247,35 +258,28 @@ public class HomeActivity extends Activity {
 
         String input = command.toLowerCase(Locale.ROOT).trim();
 
-        // Show Lost Items
         if (input.contains("lost")) {
 
             selectedFilter = "Lost";
             applyFilters();
 
             voiceAssistant.speak("Showing lost items.");
-        }
 
-        // Show Found Items
-        else if (input.contains("found")) {
+        } else if (input.contains("found")) {
 
             selectedFilter = "Found";
             applyFilters();
 
             voiceAssistant.speak("Showing found items.");
-        }
 
-        // Show All Items
-        else if (input.contains("all")) {
+        } else if (input.contains("all")) {
 
             selectedFilter = "All";
             applyFilters();
 
             voiceAssistant.speak("Showing all items.");
-        }
 
-        // Open Add Item Screen
-        else if (input.contains("add")) {
+        } else if (input.contains("add")) {
 
             voiceAssistant.speak("Opening add item.");
 
@@ -285,10 +289,8 @@ public class HomeActivity extends Activity {
             );
 
             startActivity(intent);
-        }
 
-        // Unknown Command
-        else {
+        } else {
 
             voiceAssistant.speak(
                     "Sorry, I don't know that command."
@@ -296,7 +298,7 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Attach Firebase Real-time Listener
+    // Attach Firebase Listener
     private void loadItems() {
 
         if (listenerAttached || databaseReference == null) {
@@ -398,7 +400,7 @@ public class HomeActivity extends Activity {
         adapter.notifyDataSetChanged();
     }
 
-    // Initialize Accelerometer Shake Sensor
+    // Initialize Shake Sensor
     private void initializeShakeSensor() {
 
         sensorManager = (SensorManager)
@@ -431,7 +433,6 @@ public class HomeActivity extends Activity {
                 float y = event.values[1];
                 float z = event.values[2];
 
-                // Initialize gravity values on first reading
                 if (firstSensorReading) {
 
                     gravityX = x;
@@ -442,7 +443,6 @@ public class HomeActivity extends Activity {
                     return;
                 }
 
-                // Separate gravity from actual movement
                 gravityX = GRAVITY_ALPHA * gravityX
                         + (1 - GRAVITY_ALPHA) * x;
 
@@ -452,7 +452,6 @@ public class HomeActivity extends Activity {
                 gravityZ = GRAVITY_ALPHA * gravityZ
                         + (1 - GRAVITY_ALPHA) * z;
 
-                // Calculate linear acceleration
                 float linearX = x - gravityX;
                 float linearY = y - gravityY;
                 float linearZ = z - gravityZ;
@@ -465,15 +464,12 @@ public class HomeActivity extends Activity {
 
                 long currentTime = System.currentTimeMillis();
 
-                // Detect three shakes
                 if (shakeForce > SHAKE_THRESHOLD) {
 
-                    // Reset count if sequence takes too long
                     if (currentTime - lastShakeTime > SHAKE_SEQUENCE_WINDOW) {
                         shakeCount = 0;
                     }
 
-                    // Avoid counting the same shake repeatedly
                     if (currentTime - lastShakeTime >= SHAKE_EVENT_GAP) {
 
                         shakeCount++;
@@ -485,7 +481,6 @@ public class HomeActivity extends Activity {
                                 Toast.LENGTH_SHORT
                         ).show();
 
-                        // Activate Voice Assistant after 3 shakes
                         if (shakeCount >= 3) {
 
                             shakeCount = 0;
@@ -515,7 +510,7 @@ public class HomeActivity extends Activity {
         };
     }
 
-    // Register Sensor when Activity Resumes
+    // Register Sensor
     @Override
     protected void onResume() {
         super.onResume();
@@ -532,7 +527,7 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Unregister Sensor when Activity Pauses
+    // Unregister Sensor
     @Override
     protected void onPause() {
         super.onPause();
@@ -544,7 +539,7 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Handle Microphone Permission Result
+    // Microphone Permission Result
     @Override
     public void onRequestPermissionsResult(
             int requestCode,

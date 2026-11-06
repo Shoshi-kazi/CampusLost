@@ -1,3 +1,4 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
@@ -52,9 +53,13 @@ public class ProfileActivity extends Activity {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         if (currentUser == null) {
-            Toast.makeText(this,
+
+            Toast.makeText(
+                    this,
                     "Please login first",
-                    Toast.LENGTH_SHORT).show();
+                    Toast.LENGTH_SHORT
+            ).show();
+
             finish();
             return;
         }
@@ -88,23 +93,31 @@ public class ProfileActivity extends Activity {
                                     tvName.setText("Name: " + getValue(name));
                                     tvDepartment.setText(
                                             "Department: " + getValue(department));
+
                                     tvStudentId.setText(
                                             "Student ID: " + getValue(studentId));
+
                                     tvBatch.setText("Batch: " + getValue(batch));
                                     tvEmail.setText("Email: " + getValue(email));
 
                                 } else {
-                                    Toast.makeText(ProfileActivity.this,
+
+                                    Toast.makeText(
+                                            ProfileActivity.this,
                                             "Student profile not found",
-                                            Toast.LENGTH_LONG).show();
+                                            Toast.LENGTH_LONG
+                                    ).show();
                                 }
                             }
 
                             @Override
                             public void onCancelled(DatabaseError error) {
-                                Toast.makeText(ProfileActivity.this,
+
+                                Toast.makeText(
+                                        ProfileActivity.this,
                                         "Database Error: " + error.getMessage(),
-                                        Toast.LENGTH_LONG).show();
+                                        Toast.LENGTH_LONG
+                                ).show();
                             }
                         });
     }
