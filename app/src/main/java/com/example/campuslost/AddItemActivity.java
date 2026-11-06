@@ -30,7 +30,7 @@ public class AddItemActivity extends Activity {
 
     private static final int PICK_IMAGE_REQUEST = 100;
 
-    EditText etTitle, etDescription, etLocation, etType;
+    EditText etTitle, etDescription, etLocation, etType, etContactNumber;
     Button btnSaveItem, btnChooseImage;
     ImageView ivSelectedImage;
 
@@ -56,6 +56,7 @@ public class AddItemActivity extends Activity {
         etDescription = findViewById(R.id.etItemDescription);
         etLocation = findViewById(R.id.etItemLocation);
         etType = findViewById(R.id.etItemType);
+        etContactNumber = findViewById(R.id.etContactNumber);
 
         btnSaveItem = findViewById(R.id.btnSaveItem);
         btnChooseImage = findViewById(R.id.btnChooseImage);
@@ -115,6 +116,7 @@ public class AddItemActivity extends Activity {
         String location =
                 etLocation.getText().toString().trim();
         String type = etType.getText().toString().trim();
+        String contactNumber = etContactNumber.getText().toString().trim();
 
         // Validate title
         if (title.isEmpty()) {
@@ -143,6 +145,11 @@ public class AddItemActivity extends Activity {
 
             etType.setError("Enter Lost or Found");
             etType.requestFocus();
+            return;
+        }
+        if (contactNumber.isEmpty()) {
+            etContactNumber.setError("Contact number is required");
+            etContactNumber.requestFocus();
             return;
         }
 
@@ -177,7 +184,8 @@ public class AddItemActivity extends Activity {
                                         description,
                                         location,
                                         type,
-                                        imageUrl
+                                        imageUrl,
+                                        contactNumber
                                 );
                             });
                         }
@@ -205,7 +213,8 @@ public class AddItemActivity extends Activity {
                     description,
                     location,
                     type,
-                    ""
+                    "",
+                    contactNumber
             );
         }
     }
@@ -216,13 +225,15 @@ public class AddItemActivity extends Activity {
             String description,
             String location,
             String type,
-            String imageUrl) {
+            String imageUrl,
+            String contactNumber) {
 
         FirebaseUser currentUser = auth.getCurrentUser();
 
         if (currentUser == null) {
             btnSaveItem.setEnabled(true);
             btnChooseImage.setEnabled(true);
+
             Toast.makeText(this,
                     "Please login again",
                     Toast.LENGTH_SHORT).show();
@@ -231,66 +242,86 @@ public class AddItemActivity extends Activity {
 
         String userId = currentUser.getUid();
 
-        // Generate item ID
-        String itemId = databaseReference.push().getKey();
+        DatabaseReference userReference = FirebaseDatabase
+                .getInstance("https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
+                .getReference("users")
+                .child(userId);
 
-        if (itemId == null) {
+        // Read the logged-in user's own profile name
+        userReference.child("name").get()
+                .addOnSuccessListener(snapshot -> {
 
-            btnSaveItem.setEnabled(true);
-            btnChooseImage.setEnabled(true);
+                    String posterName = snapshot.getValue(String.class);
 
-            Toast.makeText(this,
-                    "Unable to create item ID",
-                    Toast.LENGTH_SHORT).show();
-            return;
-        }
+                    if (posterName == null || posterName.trim().isEmpty()) {
+                        posterName = "CampusLost User";
+                    }
 
-        long timestamp = System.currentTimeMillis();
+                    String itemId = databaseReference.push().getKey();
 
-        // Create LostItem object
-        LostItem item = new LostItem(
-                itemId,
-                title,
-                description,
-                location,
-                type,
-                userId,
-                timestamp,
-                imageUrl
-        );
+                    if (itemId == null) {
+                        btnSaveItem.setEnabled(true);
+                        btnChooseImage.setEnabled(true);
 
-        // Save to Firebase
-        databaseReference.child(itemId)
-                .setValue(item)
-                .addOnCompleteListener(task -> {
+                        Toast.makeText(this,
+                                "Unable to create item ID",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    long timestamp = System.currentTimeMillis();
+
+                    LostItem item = new LostItem(
+                            itemId,
+                            title,
+                            description,
+                            location,
+                            type,
+                            userId,
+                            timestamp,
+                            imageUrl,
+                            posterName,
+                            contactNumber
+                    );
+
+                    databaseReference.child(itemId)
+                            .setValue(item)
+                            .addOnCompleteListener(task -> {
+
+                                btnSaveItem.setEnabled(true);
+                                btnChooseImage.setEnabled(true);
+
+                                if (task.isSuccessful()) {
+
+                                    Toast.makeText(this,
+                                            "Item saved successfully!",
+                                            Toast.LENGTH_SHORT).show();
+
+                                    finish();
+
+                                } else {
+
+                                    String errorMessage =
+                                            task.getException() != null
+                                                    ? task.getException().getMessage()
+                                                    : "Unknown error";
+
+                                    Toast.makeText(this,
+                                            "Firebase save failed: " + errorMessage,
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(error -> {
 
                     btnSaveItem.setEnabled(true);
                     btnChooseImage.setEnabled(true);
 
-                    if (task.isSuccessful()) {
-
-                        Toast.makeText(this,
-                                "Item saved successfully!",
-                                Toast.LENGTH_SHORT).show();
-
-                        finish();
-
-                    } else {
-
-                        Exception error = task.getException();
-
-                        String errorMessage = error != null
-                                ? error.getMessage()
-                                : "Unknown error";
-
-                        Toast.makeText(this,
-                                "Firebase save failed: "
-                                        + errorMessage,
-                                Toast.LENGTH_LONG).show();
-                    }
+                    Toast.makeText(this,
+                            "Could not load your profile: " + error.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 });
     }
-
     // Upload callback
     private interface UploadCallback {
 

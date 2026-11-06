@@ -3,16 +3,19 @@ package com.example.campuslost;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class ItemDetailsActivity extends Activity {
 
@@ -22,6 +25,8 @@ public class ItemDetailsActivity extends Activity {
     TextView tvDetailsDescription;
     TextView tvDetailsLocation;
     TextView tvDetailsType;
+    TextView tvDetailsPoster;
+    TextView tvDetailsContact;
 
     Button btnEdit;
     Button btnDelete;
@@ -33,6 +38,8 @@ public class ItemDetailsActivity extends Activity {
     String type;
     String userId;
     String imageUrl;
+    String posterName;
+    String contactNumber;
 
     long timestamp;
 
@@ -41,7 +48,6 @@ public class ItemDetailsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_item_details);
 
         ivDetailsImage = findViewById(R.id.ivDetailsImage);
@@ -50,50 +56,121 @@ public class ItemDetailsActivity extends Activity {
         tvDetailsDescription = findViewById(R.id.tvDetailsDescription);
         tvDetailsLocation = findViewById(R.id.tvDetailsLocation);
         tvDetailsType = findViewById(R.id.tvDetailsType);
+        tvDetailsPoster = findViewById(R.id.tvDetailsPoster);
+        tvDetailsContact = findViewById(R.id.tvDetailsContact);
 
         btnEdit = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
 
-        Intent intent = getIntent();
+        itemId = getIntent().getStringExtra("itemId");
 
-        itemId = intent.getStringExtra("itemId");
-        title = intent.getStringExtra("title");
-        description = intent.getStringExtra("description");
-        location = intent.getStringExtra("location");
-        type = intent.getStringExtra("type");
-        userId = intent.getStringExtra("userId");
-        imageUrl = intent.getStringExtra("imageUrl");
-
-        timestamp = intent.getLongExtra("timestamp", 0);
-
-        tvDetailsTitle.setText(title);
-        tvDetailsDescription.setText(description);
-        tvDetailsLocation.setText("Location: " + location);
-        tvDetailsType.setText("Status: " + type);
-
-        Glide.with(this)
-                .load(imageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_gallery)
-                .centerCrop()
-                .into(ivDetailsImage);
+        if (itemId == null || itemId.isEmpty()) {
+            Toast.makeText(this,
+                    "Item not found",
+                    Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         databaseReference = FirebaseDatabase
-                .getInstance(
-                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
+                .getInstance("https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("lostItems");
+
+        // Hide buttons until ownership is confirmed
+        btnEdit.setVisibility(View.GONE);
+        btnDelete.setVisibility(View.GONE);
+
+        loadItemDetails();
+    }
+
+    private void loadItemDetails() {
+
+        databaseReference.child(itemId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+
+                        if (!snapshot.exists()) {
+                            Toast.makeText(ItemDetailsActivity.this,
+                                    "This item no longer exists",
+                                    Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        LostItem item = snapshot.getValue(LostItem.class);
+
+                        if (item == null) {
+                            Toast.makeText(ItemDetailsActivity.this,
+                                    "Unable to load item details",
+                                    Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+
+                        title = item.getTitle();
+                        description = item.getDescription();
+                        location = item.getLocation();
+                        type = item.getType();
+                        userId = item.getUserId();
+                        imageUrl = item.getImageUrl();
+                        posterName = item.getPosterName();
+                        contactNumber = item.getContactNumber();
+                        timestamp = item.getTimestamp();
+
+                        tvDetailsTitle.setText(title != null ? title : "");
+                        tvDetailsDescription.setText(
+                                description != null ? description : "");
+                        tvDetailsLocation.setText(
+                                "Location: " + (location != null ? location : "Not available"));
+                        tvDetailsType.setText(
+                                "Status: " + (type != null ? type : "Not available"));
+
+                        tvDetailsPoster.setText(
+                                "Posted By: " +
+                                        (posterName != null && !posterName.trim().isEmpty()
+                                                ? posterName : "Not available"));
+
+                        tvDetailsContact.setText(
+                                "Contact Number: " +
+                                        (contactNumber != null && !contactNumber.trim().isEmpty()
+                                                ? contactNumber : "Not available"));
+
+                        Glide.with(ItemDetailsActivity.this)
+                                .load(imageUrl)
+                                .placeholder(android.R.drawable.ic_menu_gallery)
+                                .error(android.R.drawable.ic_menu_gallery)
+                                .centerCrop()
+                                .into(ivDetailsImage);
+
+                        checkItemOwnership();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        Toast.makeText(ItemDetailsActivity.this,
+                                "Database error: " + error.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void checkItemOwnership() {
 
         String currentUserId = FirebaseAuth
                 .getInstance()
                 .getUid();
 
-        boolean isOwner = currentUserId != null &&
-                currentUserId.equals(userId);
+        boolean isOwner = currentUserId != null
+                && currentUserId.equals(userId);
 
-        if (!isOwner) {
-
-            btnEdit.setVisibility(android.view.View.GONE);
-            btnDelete.setVisibility(android.view.View.GONE);
+        if (isOwner) {
+            btnEdit.setVisibility(View.VISIBLE);
+            btnDelete.setVisibility(View.VISIBLE);
+        } else {
+            btnEdit.setVisibility(View.GONE);
+            btnDelete.setVisibility(View.GONE);
         }
 
         btnEdit.setOnClickListener(v -> {
@@ -108,6 +185,9 @@ public class ItemDetailsActivity extends Activity {
             editIntent.putExtra("location", location);
             editIntent.putExtra("type", type);
             editIntent.putExtra("userId", userId);
+            editIntent.putExtra("imageUrl", imageUrl);
+            editIntent.putExtra("posterName", posterName);
+            editIntent.putExtra("contactNumber", contactNumber);
 
             startActivity(editIntent);
         });
@@ -130,21 +210,17 @@ public class ItemDetailsActivity extends Activity {
                                 .removeValue()
                                 .addOnSuccessListener(unused -> {
 
-                                    Toast.makeText(
-                                            this,
+                                    Toast.makeText(this,
                                             "Item deleted successfully",
-                                            Toast.LENGTH_SHORT
-                                    ).show();
+                                            Toast.LENGTH_SHORT).show();
 
                                     finish();
                                 })
-                                .addOnFailureListener(e -> {
+                                .addOnFailureListener(error -> {
 
-                                    Toast.makeText(
-                                            this,
-                                            "Delete failed: " + e.getMessage(),
-                                            Toast.LENGTH_LONG
-                                    ).show();
+                                    Toast.makeText(this,
+                                            "Delete failed: " + error.getMessage(),
+                                            Toast.LENGTH_LONG).show();
                                 });
                     })
                     .setNegativeButton("Cancel", null)

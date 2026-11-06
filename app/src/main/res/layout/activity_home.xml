@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout
@@ -5,45 +6,52 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:background="#F5F6FA">
+    android:padding="16dp"
+    android:background="#F7F8FA">
+
+    <!-- App Title -->
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="CampusLost"
-        android:textSize="26sp"
+        android:textSize="27sp"
         android:textStyle="bold"
-        android:textColor="#222222"
-        android:padding="8dp"/>
+        android:textColor="#263B53"
+        android:paddingTop="8dp"/>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Find what you lost. Help others find theirs."
         android:textSize="14sp"
-        android:textColor="#666666"
-        android:padding="8dp"/>
+        android:textColor="#737D89"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="14dp"/>
 
     <!-- Search Bar -->
 
     <SearchView
         android:id="@+id/searchView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:queryHint="Search items..."
         android:iconifiedByDefault="false"
         android:background="#FFFFFF"
-        android:queryBackground="@android:color/transparent"/>
+        android:queryBackground="@android:color/transparent"
+        android:queryHintTextColor="#8491A0"/>
 
     <!-- Profile Button -->
 
     <Button
         android:id="@+id/btnProfile"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="45dp"
         android:text="My Profile"
-        android:textAllCaps="false"/>
+        android:textAllCaps="false"
+        android:textColor="#263B53"
+        android:backgroundTint="#E3EAF2"
+        android:layout_marginTop="10dp"/>
 
     <!-- Filter Buttons -->
 
@@ -51,28 +59,38 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp">
 
         <Button
             android:id="@+id/btnAll"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="45dp"
             android:layout_weight="1"
-            android:text="All"/>
+            android:text="All"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#405D7A"/>
 
         <Button
             android:id="@+id/btnLost"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="45dp"
             android:layout_weight="1"
-            android:text="Lost"/>
+            android:text="Lost"
+            android:textAllCaps="false"
+            android:textColor="#263B53"
+            android:backgroundTint="#E3EAF2"/>
 
         <Button
             android:id="@+id/btnFound"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="45dp"
             android:layout_weight="1"
-            android:text="Found"/>
+            android:text="Found"
+            android:textAllCaps="false"
+            android:textColor="#263B53"
+            android:backgroundTint="#E3EAF2"/>
 
     </LinearLayout>
 
@@ -81,9 +99,14 @@
     <Button
         android:id="@+id/btnAddItem"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:text="+ Add Lost Item"
-        android:layout_marginTop="8dp"/>
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#405D7A"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"/>
 
     <!-- Lost and Found Items -->
 
@@ -92,14 +115,19 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:paddingTop="8dp"/>
+        android:paddingTop="8dp"
+        android:clipToPadding="false"/>
 
     <!-- Logout Button -->
 
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Logout"/>
+        android:layout_height="45dp"
+        android:text="Logout"
+        android:textAllCaps="false"
+        android:textColor="#A33A3A"
+        android:backgroundTint="#F1E6E6"
+        android:layout_marginTop="6dp"/>
 
 </LinearLayout>
