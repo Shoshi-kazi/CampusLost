@@ -1,6 +1,6 @@
+
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -13,13 +13,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CampusLost">
 
-        <!-- Main screen -->
+        <!-- Splash Screen: App starts here -->
         <activity
-            android:name=".MainActivityJava"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.CampusLost"
-            android:windowSoftInputMode="adjustResize">
+            android:name=".SplashActivity"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,30 +25,43 @@
 
         </activity>
 
-        <!-- Login screen -->
+        <!-- Welcome Screen -->
+        <activity
+            android:name=".MainActivityJava"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CampusLost"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Login Screen -->
         <activity
             android:name=".LoginActivity"
             android:exported="false" />
 
-        <!-- Registration screen -->
+        <!-- Registration Screen -->
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />
 
-        <!-- Home screen -->
+        <!-- Home Screen -->
         <activity
             android:name=".HomeActivity"
             android:exported="false" />
+
+        <!-- Add Item Screen -->
         <activity
             android:name=".AddItemActivity"
             android:exported="false" />
+
+        <!-- Item Details Screen -->
         <activity
             android:name=".ItemDetailsActivity"
-            android:exported="false"/>
+            android:exported="false" />
 
+        <!-- Edit Item Screen -->
         <activity
             android:name=".EditItemActivity"
-            android:exported="false"/>
+            android:exported="false" />
 
     </application>
 
