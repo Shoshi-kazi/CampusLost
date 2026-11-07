@@ -2,107 +2,279 @@
 
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:background="#EEF3FA">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="18dp">
 
-        <TextView
+        <!-- Header Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add Lost / Found Item"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:layout_marginBottom="20dp"/>
+            app:cardCornerRadius="20dp"
+            app:cardElevation="5dp"
+            app:cardBackgroundColor="#172554">
 
-        <EditText
-            android:id="@+id/etItemTitle"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="22dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="CREATE A POST"
+                    android:textColor="#93C5FD"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Add Lost / Found Item"
+                    android:textColor="#FFFFFF"
+                    android:textSize="25sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Help someone find what they have lost."
+                    android:textColor="#CBD5E1"
+                    android:textSize="14sp"
+                    android:layout_marginTop="6dp"/>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Form Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Item title"
-            android:textColor="#000000"
-            android:textColorHint="#808080"
-            android:inputType="textCapSentences"/>
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="#FFFFFF">
 
-        <EditText
-            android:id="@+id/etItemDescription"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Item Information"
+                    android:textColor="#172554"
+                    android:textSize="19sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Title -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Item title"
+                    app:boxBackgroundMode="outline"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:boxStrokeColor="#64748B"
+                    app:hintTextColor="#1D4ED8"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etItemTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences"
+                        android:textColor="#172554"
+                        android:textColorHint="#64748B"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Description -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Item description"
+                    android:layout_marginTop="14dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:boxStrokeColor="#64748B"
+                    app:hintTextColor="#1D4ED8"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etItemDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:minLines="3"
+                        android:gravity="top"
+                        android:textColor="#172554"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Location -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Location"
+                    android:layout_marginTop="14dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:boxStrokeColor="#64748B"
+                    app:hintTextColor="#1D4ED8"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etItemLocation"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences"
+                        android:textColor="#172554"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Type -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Type: Lost or Found"
+                    android:layout_marginTop="14dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:boxStrokeColor="#64748B"
+                    app:hintTextColor="#1D4ED8"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etItemType"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapWords"
+                        android:textColor="#172554"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Contact -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Your contact number"
+                    android:layout_marginTop="14dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxBackgroundColor="#FFFFFF"
+                    app:boxStrokeColor="#64748B"
+                    app:hintTextColor="#1D4ED8"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etContactNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone"
+                        android:textColor="#172554"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Image Upload Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Item description"
-            android:textColor="#000000"
-            android:textColorHint="#808080"
-            android:inputType="textCapSentences|textMultiLine"
-            android:minLines="2"
-            android:gravity="top"
-            android:layout_marginTop="10dp"/>
+            android:layout_marginTop="18dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="#FFFFFF">
 
-        <EditText
-            android:id="@+id/etItemLocation"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Location"
-            android:textColor="#000000"
-            android:textColorHint="#808080"
-            android:inputType="textCapSentences"
-            android:layout_marginTop="10dp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-        <EditText
-            android:id="@+id/etItemType"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Type: Lost or Found"
-            android:textColor="#000000"
-            android:textColorHint="#808080"
-            android:inputType="textCapWords"
-            android:layout_marginTop="10dp"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Item Photo"
+                    android:textColor="#172554"
+                    android:textSize="19sp"
+                    android:textStyle="bold"/>
 
-        <EditText
-            android:id="@+id/etContactNumber"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Your contact number"
-            android:textColor="#000000"
-            android:textColorHint="#808080"
-            android:inputType="phone"
-            android:layout_marginTop="10dp"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Add a photo to help identify the item."
+                    android:textColor="#64748B"
+                    android:textSize="13sp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="14dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Item Image"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:textColor="#000000"
-            android:layout_marginTop="20dp"/>
+                <ImageView
+                    android:id="@+id/ivSelectedImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="190dp"
+                    android:scaleType="centerCrop"
+                    android:src="@android:drawable/ic_menu_gallery"
+                    android:background="#E2E8F0"
+                    android:contentDescription="Selected item image"/>
 
-        <ImageView
-            android:id="@+id/ivSelectedImage"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="8dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:contentDescription="Selected item image"/>
+                <Button
+                    android:id="@+id/btnChooseImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Choose from Gallery"
+                    android:textColor="#172554"
+                    android:backgroundTint="#DBEAFE"
+                    android:layout_marginTop="14dp"/>
 
-        <Button
-            android:id="@+id/btnChooseImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Choose Image from Gallery"
-            android:layout_marginTop="10dp"/>
+                <Button
+                    android:id="@+id/btnTakePhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Take Photo with Camera"
+                    android:textColor="#172554"
+                    android:backgroundTint="#DBEAFE"
+                    android:layout_marginTop="6dp"/>
 
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Save Button -->
         <Button
             android:id="@+id/btnSaveItem"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save Item"
-            android:layout_marginTop="20dp"/>
+            android:layout_height="58dp"
+            android:text="SAVE ITEM"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1D4ED8"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"/>
 
     </LinearLayout>
 </ScrollView>

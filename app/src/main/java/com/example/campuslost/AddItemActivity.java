@@ -1,9 +1,12 @@
+
 package com.example.campuslost;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -18,6 +21,8 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -29,9 +34,10 @@ import java.util.concurrent.Executors;
 public class AddItemActivity extends Activity {
 
     private static final int PICK_IMAGE_REQUEST = 100;
+    private static final int CAMERA_REQUEST = 101;
 
     EditText etTitle, etDescription, etLocation, etType, etContactNumber;
-    Button btnSaveItem, btnChooseImage;
+    Button btnSaveItem, btnChooseImage, btnTakePhoto;
     ImageView ivSelectedImage;
 
     DatabaseReference databaseReference;
@@ -42,7 +48,6 @@ public class AddItemActivity extends Activity {
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
 
-    // Replace with your actual Cloudinary details
     private final String cloudName = "kns9m6z7";
     private final String uploadPreset = "campuslost_unsigned";
 
@@ -51,7 +56,6 @@ public class AddItemActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_item);
 
-        // Connect XML views
         etTitle = findViewById(R.id.etItemTitle);
         etDescription = findViewById(R.id.etItemDescription);
         etLocation = findViewById(R.id.etItemLocation);
@@ -60,25 +64,22 @@ public class AddItemActivity extends Activity {
 
         btnSaveItem = findViewById(R.id.btnSaveItem);
         btnChooseImage = findViewById(R.id.btnChooseImage);
+        btnTakePhoto = findViewById(R.id.btnTakePhoto);
         ivSelectedImage = findViewById(R.id.ivSelectedImage);
 
-        // Firebase setup
         auth = FirebaseAuth.getInstance();
 
         databaseReference = FirebaseDatabase
                 .getInstance("https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("lostItems");
 
-        // Open Gallery
         btnChooseImage.setOnClickListener(v -> openGallery());
-
-        // Save item
+        btnTakePhoto.setOnClickListener(v -> openCamera());
         btnSaveItem.setOnClickListener(v -> saveItem());
     }
 
-    // Open phone Gallery
+    // Open Gallery
     private void openGallery() {
-
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
 
@@ -88,22 +89,71 @@ public class AddItemActivity extends Activity {
         );
     }
 
-    // Receive selected image
+    // Open phone Camera
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(intent, CAMERA_REQUEST);
+        } else {
+            Toast.makeText(this,
+                    "No camera app found",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Receive image from Gallery or Camera
     @Override
     protected void onActivityResult(
             int requestCode, int resultCode, Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_IMAGE_REQUEST
-                && resultCode == RESULT_OK
-                && data != null
-                && data.getData() != null) {
+        if (resultCode != RESULT_OK || data == null) {
+            return;
+        }
+
+        if (requestCode == PICK_IMAGE_REQUEST && data.getData() != null) {
 
             selectedImageUri = data.getData();
-
-            // Show image preview
             ivSelectedImage.setImageURI(selectedImageUri);
+
+        } else if (requestCode == CAMERA_REQUEST) {
+
+            Bundle extras = data.getExtras();
+
+            if (extras != null) {
+                Bitmap photo = (Bitmap) extras.get("data");
+
+                if (photo != null) {
+                    try {
+                        File imageFile = new File(
+                                getCacheDir(),
+                                "campuslost_camera_" + System.currentTimeMillis() + ".jpg"
+                        );
+
+                        FileOutputStream outputStream =
+                                new FileOutputStream(imageFile);
+
+                        photo.compress(
+                                Bitmap.CompressFormat.JPEG,
+                                90,
+                                outputStream
+                        );
+
+                        outputStream.flush();
+                        outputStream.close();
+
+                        selectedImageUri = Uri.fromFile(imageFile);
+                        ivSelectedImage.setImageBitmap(photo);
+
+                    } catch (Exception e) {
+                        Toast.makeText(this,
+                                "Could not save camera photo",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
         }
     }
 
@@ -111,49 +161,43 @@ public class AddItemActivity extends Activity {
     private void saveItem() {
 
         String title = etTitle.getText().toString().trim();
-        String description =
-                etDescription.getText().toString().trim();
-        String location =
-                etLocation.getText().toString().trim();
+        String description = etDescription.getText().toString().trim();
+        String location = etLocation.getText().toString().trim();
         String type = etType.getText().toString().trim();
-        String contactNumber = etContactNumber.getText().toString().trim();
+        String contactNumber =
+                etContactNumber.getText().toString().trim();
 
-        // Validate title
         if (title.isEmpty()) {
             etTitle.setError("Title is required");
             etTitle.requestFocus();
             return;
         }
 
-        // Validate description
         if (description.isEmpty()) {
             etDescription.setError("Description is required");
             etDescription.requestFocus();
             return;
         }
 
-        // Validate location
         if (location.isEmpty()) {
             etLocation.setError("Location is required");
             etLocation.requestFocus();
             return;
         }
 
-        // Validate item type
         if (!type.equalsIgnoreCase("Lost")
                 && !type.equalsIgnoreCase("Found")) {
-
             etType.setError("Enter Lost or Found");
             etType.requestFocus();
             return;
         }
+
         if (contactNumber.isEmpty()) {
             etContactNumber.setError("Contact number is required");
             etContactNumber.requestFocus();
             return;
         }
 
-        // Check logged-in user
         FirebaseUser currentUser = auth.getCurrentUser();
 
         if (currentUser == null) {
@@ -163,11 +207,10 @@ public class AddItemActivity extends Activity {
             return;
         }
 
-        // Disable buttons during saving
         btnSaveItem.setEnabled(false);
         btnChooseImage.setEnabled(false);
+        btnTakePhoto.setEnabled(false);
 
-        // If image is selected, upload it first
         if (selectedImageUri != null) {
 
             uploadImageToCloudinary(
@@ -176,38 +219,34 @@ public class AddItemActivity extends Activity {
 
                         @Override
                         public void onSuccess(String imageUrl) {
-
-                            runOnUiThread(() -> {
-
-                                saveItemToFirebase(
-                                        title,
-                                        description,
-                                        location,
-                                        type,
-                                        imageUrl,
-                                        contactNumber
-                                );
-                            });
+                            runOnUiThread(() ->
+                                    saveItemToFirebase(
+                                            title,
+                                            description,
+                                            location,
+                                            type,
+                                            imageUrl,
+                                            contactNumber
+                                    )
+                            );
                         }
 
                         @Override
                         public void onFailure(String error) {
-
                             runOnUiThread(() -> {
+                                enableButtons();
 
-                                btnSaveItem.setEnabled(true);
-                                btnChooseImage.setEnabled(true);
-
-                                Toast.makeText(AddItemActivity.this,
+                                Toast.makeText(
+                                        AddItemActivity.this,
                                         "Image upload failed: " + error,
-                                        Toast.LENGTH_LONG).show();
+                                        Toast.LENGTH_LONG
+                                ).show();
                             });
                         }
-                    });
+                    }
+            );
 
         } else {
-
-            // Save without image
             saveItemToFirebase(
                     title,
                     description,
@@ -219,7 +258,14 @@ public class AddItemActivity extends Activity {
         }
     }
 
-    // Save item details and image URL to Firebase
+    // Enable buttons after saving or an error
+    private void enableButtons() {
+        btnSaveItem.setEnabled(true);
+        btnChooseImage.setEnabled(true);
+        btnTakePhoto.setEnabled(true);
+    }
+
+    // Save item details to Firebase
     private void saveItemToFirebase(
             String title,
             String description,
@@ -231,9 +277,7 @@ public class AddItemActivity extends Activity {
         FirebaseUser currentUser = auth.getCurrentUser();
 
         if (currentUser == null) {
-            btnSaveItem.setEnabled(true);
-            btnChooseImage.setEnabled(true);
-
+            enableButtons();
             Toast.makeText(this,
                     "Please login again",
                     Toast.LENGTH_SHORT).show();
@@ -247,7 +291,6 @@ public class AddItemActivity extends Activity {
                 .getReference("users")
                 .child(userId);
 
-        // Read the logged-in user's own profile name
         userReference.child("name").get()
                 .addOnSuccessListener(snapshot -> {
 
@@ -260,9 +303,7 @@ public class AddItemActivity extends Activity {
                     String itemId = databaseReference.push().getKey();
 
                     if (itemId == null) {
-                        btnSaveItem.setEnabled(true);
-                        btnChooseImage.setEnabled(true);
-
+                        enableButtons();
                         Toast.makeText(this,
                                 "Unable to create item ID",
                                 Toast.LENGTH_SHORT).show();
@@ -288,19 +329,15 @@ public class AddItemActivity extends Activity {
                             .setValue(item)
                             .addOnCompleteListener(task -> {
 
-                                btnSaveItem.setEnabled(true);
-                                btnChooseImage.setEnabled(true);
+                                enableButtons();
 
                                 if (task.isSuccessful()) {
-
                                     Toast.makeText(this,
                                             "Item saved successfully!",
                                             Toast.LENGTH_SHORT).show();
-
                                     finish();
 
                                 } else {
-
                                     String errorMessage =
                                             task.getException() != null
                                                     ? task.getException().getMessage()
@@ -313,20 +350,16 @@ public class AddItemActivity extends Activity {
                             });
                 })
                 .addOnFailureListener(error -> {
-
-                    btnSaveItem.setEnabled(true);
-                    btnChooseImage.setEnabled(true);
+                    enableButtons();
 
                     Toast.makeText(this,
                             "Could not load your profile: " + error.getMessage(),
                             Toast.LENGTH_LONG).show();
                 });
     }
-    // Upload callback
+
     private interface UploadCallback {
-
         void onSuccess(String imageUrl);
-
         void onFailure(String error);
     }
 
@@ -340,17 +373,14 @@ public class AddItemActivity extends Activity {
             HttpURLConnection connection = null;
 
             try {
-
-                String boundary =
-                        "----CampusLost" + UUID.randomUUID();
+                String boundary = "----CampusLost" + UUID.randomUUID();
 
                 URL url = new URL(
                         "https://api.cloudinary.com/v1_1/"
                                 + cloudName + "/image/upload"
                 );
 
-                connection =
-                        (HttpURLConnection) url.openConnection();
+                connection = (HttpURLConnection) url.openConnection();
 
                 connection.setRequestMethod("POST");
                 connection.setDoOutput(true);
@@ -363,11 +393,8 @@ public class AddItemActivity extends Activity {
                 );
 
                 DataOutputStream output =
-                        new DataOutputStream(
-                                connection.getOutputStream()
-                        );
+                        new DataOutputStream(connection.getOutputStream());
 
-                // Send upload preset
                 writeTextField(
                         output,
                         boundary,
@@ -375,15 +402,12 @@ public class AddItemActivity extends Activity {
                         uploadPreset
                 );
 
-                // Get image MIME type
-                String mimeType =
-                        getContentResolver().getType(imageUri);
+                String mimeType = getContentResolver().getType(imageUri);
 
                 if (mimeType == null) {
                     mimeType = "image/jpeg";
                 }
 
-                // Send image file
                 output.writeBytes("--" + boundary + "\r\n");
 
                 output.writeBytes(
@@ -397,13 +421,10 @@ public class AddItemActivity extends Activity {
                 );
 
                 InputStream input =
-                        getContentResolver()
-                                .openInputStream(imageUri);
+                        getContentResolver().openInputStream(imageUri);
 
                 if (input == null) {
-                    throw new Exception(
-                            "Cannot read selected image"
-                    );
+                    throw new Exception("Cannot read selected image");
                 }
 
                 byte[] buffer = new byte[8192];
@@ -421,7 +442,6 @@ public class AddItemActivity extends Activity {
                 output.flush();
                 output.close();
 
-                // Read Cloudinary response
                 int responseCode = connection.getResponseCode();
 
                 InputStream responseStream;
@@ -432,10 +452,13 @@ public class AddItemActivity extends Activity {
                     responseStream = connection.getErrorStream();
                 }
 
-                BufferedReader reader =
-                        new BufferedReader(
-                                new InputStreamReader(responseStream)
-                        );
+                if (responseStream == null) {
+                    throw new Exception("Empty response from Cloudinary");
+                }
+
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(responseStream)
+                );
 
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -451,10 +474,7 @@ public class AddItemActivity extends Activity {
                     JSONObject json =
                             new JSONObject(response.toString());
 
-                    String secureUrl =
-                            json.getString("secure_url");
-
-                    callback.onSuccess(secureUrl);
+                    callback.onSuccess(json.getString("secure_url"));
 
                 } else {
 
@@ -464,8 +484,7 @@ public class AddItemActivity extends Activity {
                     String errorMessage = "HTTP " + responseCode;
 
                     if (json.has("error")) {
-                        errorMessage = json
-                                .getJSONObject("error")
+                        errorMessage = json.getJSONObject("error")
                                 .optString("message", errorMessage);
                     }
 
@@ -481,7 +500,6 @@ public class AddItemActivity extends Activity {
                 );
 
             } finally {
-
                 if (connection != null) {
                     connection.disconnect();
                 }
