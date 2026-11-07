@@ -97,13 +97,22 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/btnShare"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Share Item"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#405D7A"
+            android:layout_marginTop="20dp" />
+
+        <Button
             android:id="@+id/btnEdit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Edit Item"
             android:textColor="#FFFFFF"
             android:backgroundTint="#263B53"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="8dp" />
 
         <Button
             android:id="@+id/btnDelete"

@@ -15,8 +15,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.HashMap;
-
 public class ProfileActivity extends Activity {
 
     private TextView tvName, tvDepartment, tvStudentId;
@@ -47,11 +45,11 @@ public class ProfileActivity extends Activity {
 
         btnBack.setOnClickListener(v -> finish());
 
-        saveOldAccountProfile();
+        loadStudentProfile();
     }
 
-    // Save profile for the existing account if it does not exist
-    private void saveOldAccountProfile() {
+    // Load logged-in student's profile from Firebase
+    private void loadStudentProfile() {
 
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
@@ -62,93 +60,6 @@ public class ProfileActivity extends Activity {
                     Toast.LENGTH_SHORT
             ).show();
 
-            finish();
-            return;
-        }
-
-        String userId = currentUser.getUid();
-
-        DatabaseReference profileReference =
-                usersReference.child(userId);
-
-        profileReference.addListenerForSingleValueEvent(
-                new ValueEventListener() {
-
-                    @Override
-                    public void onDataChange(DataSnapshot snapshot) {
-
-                        if (snapshot.exists()) {
-
-                            // Profile already exists
-                            loadStudentProfile();
-
-                        } else {
-
-                            // Create profile for the old account
-                            HashMap<String, Object> studentProfile =
-                                    new HashMap<>();
-
-                            studentProfile.put(
-                                    "name",
-                                    "Nusaiba Jannat Shoshi"
-                            );
-
-                            studentProfile.put("department", "CSE");
-
-                            studentProfile.put(
-                                    "studentId",
-                                    "4r9874934"
-                            );
-
-                            studentProfile.put("batch", "D-85");
-
-                            studentProfile.put(
-                                    "email",
-                                    currentUser.getEmail()
-                            );
-
-                            profileReference.setValue(studentProfile)
-                                    .addOnSuccessListener(unused -> {
-
-                                        Toast.makeText(
-                                                ProfileActivity.this,
-                                                "Profile created successfully!",
-                                                Toast.LENGTH_SHORT
-                                        ).show();
-
-                                        loadStudentProfile();
-                                    })
-                                    .addOnFailureListener(e -> {
-
-                                        Toast.makeText(
-                                                ProfileActivity.this,
-                                                "Profile save failed: "
-                                                        + e.getMessage(),
-                                                Toast.LENGTH_LONG
-                                        ).show();
-                                    });
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError error) {
-
-                        Toast.makeText(
-                                ProfileActivity.this,
-                                "Database Error: " + error.getMessage(),
-                                Toast.LENGTH_LONG
-                        ).show();
-                    }
-                }
-        );
-    }
-
-    // Load student profile from Firebase
-    private void loadStudentProfile() {
-
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-
-        if (currentUser == null) {
             finish();
             return;
         }
@@ -203,9 +114,11 @@ public class ProfileActivity extends Activity {
 
                                     Toast.makeText(
                                             ProfileActivity.this,
-                                            "Student profile not found",
+                                            "Student profile not found. Please register again.",
                                             Toast.LENGTH_LONG
                                     ).show();
+
+                                    finish();
                                 }
                             }
 
@@ -222,7 +135,7 @@ public class ProfileActivity extends Activity {
                 );
     }
 
-    // Handle empty values
+    // Handle empty or missing values
     private String getValue(String value) {
 
         return value == null || value.trim().isEmpty()

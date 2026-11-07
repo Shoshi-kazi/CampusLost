@@ -1,23 +1,29 @@
-
 package com.example.campuslost;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.graphics.Color;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.Button;
-import android.widget.SearchView;
 import android.widget.EditText;
+import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -30,50 +36,51 @@ import java.util.Locale;
 
 public class HomeActivity extends Activity {
 
-    // UI Components
-    RecyclerView recyclerView;
-    Button btnAddItem, btnLogout, btnProfile;
-    Button btnAll, btnLost, btnFound;
-    SearchView searchView;
+    private DrawerLayout drawerLayout;
 
-    // Item Lists
-    ArrayList<LostItem> allItems;
-    ArrayList<LostItem> displayedItems;
-    LostItemAdapter adapter;
+    private RecyclerView recyclerView;
+    private FloatingActionButton btnAddItem;
 
-    // Firebase
-    DatabaseReference databaseReference;
-    ValueEventListener valueEventListener;
+    private Button btnLogout, btnProfile;
+    private Button btnAll, btnLost, btnFound;
+    private Button btnMenu;
+
+    private Button navHome, navAddItem, navProfile, navLogout;
+
+    private SearchView searchView;
+
+    private TextView tvTotalCount, tvLostCount, tvFoundCount;
+    private TextView tvEmptyState;
+
+    private ArrayList<LostItem> allItems;
+    private ArrayList<LostItem> displayedItems;
+    private LostItemAdapter adapter;
+
+    private DatabaseReference databaseReference;
+    private ValueEventListener valueEventListener;
     private boolean listenerAttached = false;
 
-    // Search and Filter
-    String selectedFilter = "All";
-    String searchText = "";
+    private String selectedFilter = "All";
+    private String searchText = "";
 
-    // Shake Sensor
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private SensorEventListener sensorEventListener;
 
     private static final float SHAKE_THRESHOLD = 3.5f;
-
-    // Three Shake Settings
-    private int shakeCount = 0;
-    private long lastShakeTime = 0;
-
     private static final long SHAKE_SEQUENCE_WINDOW = 2500;
     private static final long SHAKE_EVENT_GAP = 350;
 
-    // Gravity Filter
+    private int shakeCount = 0;
+    private long lastShakeTime = 0;
+
     private float gravityX = 0;
     private float gravityY = 0;
     private float gravityZ = 0;
 
     private boolean firstSensorReading = true;
-
     private static final float GRAVITY_ALPHA = 0.8f;
 
-    // Voice Assistant
     private CampusLostVoiceAssistant voiceAssistant;
 
     @Override
@@ -81,19 +88,47 @@ public class HomeActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        // Initialize Views
+        initializeViews();
+        initializeRecyclerView();
+        initializeButtons();
+        initializeDrawer();
+        initializeSearch();
+        initializeFirebase();
+        initializeVoiceAssistant();
+        initializeShakeSensor();
+
+        updateFilterButtonStyles();
+        loadItems();
+    }
+
+    private void initializeViews() {
+
+        drawerLayout = findViewById(R.id.drawerLayout);
+
         recyclerView = findViewById(R.id.recyclerView);
 
         btnAddItem = findViewById(R.id.btnAddItem);
         btnLogout = findViewById(R.id.btnLogout);
+        btnProfile = findViewById(R.id.btnProfile);
+        btnMenu = findViewById(R.id.btnMenu);
 
         btnAll = findViewById(R.id.btnAll);
         btnLost = findViewById(R.id.btnLost);
         btnFound = findViewById(R.id.btnFound);
 
+        navHome = findViewById(R.id.navHome);
+        navAddItem = findViewById(R.id.navAddItem);
+        navProfile = findViewById(R.id.navProfile);
+        navLogout = findViewById(R.id.navLogout);
+
         searchView = findViewById(R.id.searchView);
 
-        // Make Search Text Black
+        tvTotalCount = findViewById(R.id.tvTotalCount);
+        tvLostCount = findViewById(R.id.tvLostCount);
+        tvFoundCount = findViewById(R.id.tvFoundCount);
+
+        tvEmptyState = findViewById(R.id.tvEmptyState);
+
         int searchTextId = getResources().getIdentifier(
                 "search_src_text",
                 "id",
@@ -106,23 +141,13 @@ public class HomeActivity extends Activity {
             searchTextView.setTextColor(Color.BLACK);
             searchTextView.setHintTextColor(Color.GRAY);
         }
+    }
 
-        // Profile Button
-        btnProfile = findViewById(R.id.btnProfile);
+    private void initializeRecyclerView() {
 
-        btnProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(
-                    HomeActivity.this,
-                    ProfileActivity.class
-            );
-            startActivity(intent);
-        });
-
-        // Initialize Lists
         allItems = new ArrayList<>();
         displayedItems = new ArrayList<>();
 
-        // RecyclerView Setup
         adapter = new LostItemAdapter(displayedItems);
 
         recyclerView.setLayoutManager(
@@ -131,7 +156,6 @@ public class HomeActivity extends Activity {
 
         recyclerView.setAdapter(adapter);
 
-        // Item Click - Open Details
         adapter.setOnItemClickListener(item -> {
 
             Intent intent = new Intent(
@@ -150,62 +174,172 @@ public class HomeActivity extends Activity {
 
             startActivity(intent);
         });
+    }
 
-        // Firebase Database Connection
-        databaseReference = FirebaseDatabase
-                .getInstance(
-                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app"
+    private void initializeButtons() {
+
+        btnMenu.setOnClickListener(v ->
+                drawerLayout.openDrawer(Gravity.START)
+        );
+
+        btnProfile.setOnClickListener(v -> openProfile());
+
+        btnAddItem.setOnClickListener(v -> openAddItem());
+
+        btnLogout.setOnClickListener(v -> logoutUser());
+
+        btnAll.setOnClickListener(v -> changeFilter("All"));
+        btnLost.setOnClickListener(v -> changeFilter("Lost"));
+        btnFound.setOnClickListener(v -> changeFilter("Found"));
+    }
+
+    private void initializeDrawer() {
+
+        navHome.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(Gravity.START);
+            selectedFilter = "All";
+            updateFilterButtonStyles();
+            applyFilters();
+            showSnackbar("Home");
+        });
+
+        navAddItem.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(Gravity.START);
+            openAddItem();
+        });
+
+        navProfile.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(Gravity.START);
+            openProfile();
+        });
+
+        navLogout.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(Gravity.START);
+            logoutUser();
+        });
+    }
+
+    private void openProfile() {
+
+        startActivity(new Intent(
+                HomeActivity.this,
+                ProfileActivity.class
+        ));
+    }
+
+    private void openAddItem() {
+
+        startActivity(new Intent(
+                HomeActivity.this,
+                AddItemActivity.class
+        ));
+    }
+
+    private void logoutUser() {
+
+        removeFirebaseListener();
+
+        FirebaseAuth.getInstance().signOut();
+
+        SharedPreferences prefs = getSharedPreferences(
+                "CampusLostPrefs",
+                MODE_PRIVATE
+        );
+
+        prefs.edit()
+                .putBoolean("remember_me", false)
+                .apply();
+
+        Toast.makeText(
+                HomeActivity.this,
+                "Logged out successfully",
+                Toast.LENGTH_SHORT
+        ).show();
+
+        Intent intent = new Intent(
+                HomeActivity.this,
+                MainActivityJava.class
+        );
+
+        intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+        );
+
+        startActivity(intent);
+        finish();
+    }
+
+    private void changeFilter(String filter) {
+
+        selectedFilter = filter;
+
+        updateFilterButtonStyles();
+        applyFilters();
+
+        showSnackbar("Showing " + filter + " items");
+    }
+
+    private void showSnackbar(String message) {
+
+        Snackbar.make(
+                drawerLayout,
+                message,
+                Snackbar.LENGTH_SHORT
+        ).show();
+    }
+
+    private void updateFilterButtonStyles() {
+
+        int selectedColor = Color.parseColor("#315C85");
+        int normalColor = Color.parseColor("#E8EEF5");
+
+        int selectedText = Color.WHITE;
+        int normalText = Color.parseColor("#29445F");
+
+        setFilterStyle(
+                btnAll, "All",
+                selectedColor, normalColor,
+                selectedText, normalText
+        );
+
+        setFilterStyle(
+                btnLost, "Lost",
+                selectedColor, normalColor,
+                selectedText, normalText
+        );
+
+        setFilterStyle(
+                btnFound, "Found",
+                selectedColor, normalColor,
+                selectedText, normalText
+        );
+    }
+
+    private void setFilterStyle(
+            Button button,
+            String filter,
+            int selectedColor,
+            int normalColor,
+            int selectedText,
+            int normalText
+    ) {
+
+        boolean selected = selectedFilter.equals(filter);
+
+        button.setBackgroundTintList(
+                ColorStateList.valueOf(
+                        selected ? selectedColor : normalColor
                 )
-                .getReference("lostItems");
+        );
 
-        // Add Item Button
-        btnAddItem.setOnClickListener(v -> {
+        button.setTextColor(
+                selected ? selectedText : normalText
+        );
+    }
 
-            Intent intent = new Intent(
-                    HomeActivity.this,
-                    AddItemActivity.class
-            );
+    private void initializeSearch() {
 
-            startActivity(intent);
-        });
-
-        // Logout Button
-        btnLogout.setOnClickListener(v -> {
-
-            removeFirebaseListener();
-
-            FirebaseAuth.getInstance().signOut();
-
-            SharedPreferences prefs = getSharedPreferences(
-                    "CampusLostPrefs",
-                    MODE_PRIVATE
-            );
-
-            prefs.edit()
-                    .putBoolean("remember_me", false)
-                    .apply();
-
-            Toast.makeText(
-                    HomeActivity.this,
-                    "Logged out successfully",
-                    Toast.LENGTH_SHORT
-            ).show();
-
-            Intent intent = new Intent(
-                    HomeActivity.this,
-                    MainActivityJava.class
-            );
-
-            intent.setFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK |
-                            Intent.FLAG_ACTIVITY_CLEAR_TASK
-            );
-
-            startActivity(intent);
-            finish();
-        });
-
-        // Search Functionality
         searchView.setOnQueryTextListener(
                 new SearchView.OnQueryTextListener() {
 
@@ -228,39 +362,25 @@ public class HomeActivity extends Activity {
                     }
                 }
         );
+    }
 
-        // All Filter
-        btnAll.setOnClickListener(v -> {
-            selectedFilter = "All";
-            applyFilters();
-        });
+    private void initializeFirebase() {
 
-        // Lost Filter
-        btnLost.setOnClickListener(v -> {
-            selectedFilter = "Lost";
-            applyFilters();
-        });
+        databaseReference = FirebaseDatabase
+                .getInstance(
+                        "https://campuslost-feaf4-default-rtdb.asia-southeast1.firebasedatabase.app"
+                )
+                .getReference("lostItems");
+    }
 
-        // Found Filter
-        btnFound.setOnClickListener(v -> {
-            selectedFilter = "Found";
-            applyFilters();
-        });
+    private void initializeVoiceAssistant() {
 
-        // Initialize Voice Assistant
         voiceAssistant = new CampusLostVoiceAssistant(
                 this,
                 this::handleVoiceCommand
         );
-
-        // Firebase Real-time Listener
-        loadItems();
-
-        // Initialize Shake Sensor
-        initializeShakeSensor();
     }
 
-    // Handle Voice Commands
     private void handleVoiceCommand(String command) {
 
         if (command == null || command.trim().isEmpty()) {
@@ -276,35 +396,23 @@ public class HomeActivity extends Activity {
 
         if (input.contains("lost")) {
 
-            selectedFilter = "Lost";
-            applyFilters();
-
+            changeFilter("Lost");
             voiceAssistant.speak("Showing lost items.");
 
         } else if (input.contains("found")) {
 
-            selectedFilter = "Found";
-            applyFilters();
-
+            changeFilter("Found");
             voiceAssistant.speak("Showing found items.");
 
         } else if (input.contains("all")) {
 
-            selectedFilter = "All";
-            applyFilters();
-
+            changeFilter("All");
             voiceAssistant.speak("Showing all items.");
 
         } else if (input.contains("add")) {
 
             voiceAssistant.speak("Opening add item.");
-
-            Intent intent = new Intent(
-                    HomeActivity.this,
-                    AddItemActivity.class
-            );
-
-            startActivity(intent);
+            openAddItem();
 
         } else {
 
@@ -314,7 +422,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Attach Firebase Listener
     private void loadItems() {
 
         if (listenerAttached || databaseReference == null) {
@@ -343,7 +450,6 @@ public class HomeActivity extends Activity {
         listenerAttached = true;
     }
 
-    // Update RecyclerView Data
     private void updateItemList(DataSnapshot snapshot) {
 
         allItems.clear();
@@ -353,16 +459,41 @@ public class HomeActivity extends Activity {
             LostItem item = data.getValue(LostItem.class);
 
             if (item != null) {
-
                 item.setItemId(data.getKey());
                 allItems.add(item);
             }
         }
 
+        updateDashboardSummary();
         applyFilters();
     }
 
-    // Remove Firebase Listener
+    private void updateDashboardSummary() {
+
+        int totalCount = allItems.size();
+        int lostCount = 0;
+        int foundCount = 0;
+
+        for (LostItem item : allItems) {
+
+            String type = item.getType();
+
+            if (type == null) {
+                continue;
+            }
+
+            if (type.equalsIgnoreCase("Lost")) {
+                lostCount++;
+            } else if (type.equalsIgnoreCase("Found")) {
+                foundCount++;
+            }
+        }
+
+        tvTotalCount.setText(String.valueOf(totalCount));
+        tvLostCount.setText(String.valueOf(lostCount));
+        tvFoundCount.setText(String.valueOf(foundCount));
+    }
+
     private void removeFirebaseListener() {
 
         if (listenerAttached &&
@@ -376,7 +507,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Search and Filter Logic
     private void applyFilters() {
 
         displayedItems.clear();
@@ -414,9 +544,44 @@ public class HomeActivity extends Activity {
         }
 
         adapter.notifyDataSetChanged();
+
+        updateEmptyState();
     }
 
-    // Initialize Shake Sensor
+    private void updateEmptyState() {
+
+        if (!displayedItems.isEmpty()) {
+
+            tvEmptyState.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+
+        } else {
+
+            recyclerView.setVisibility(View.GONE);
+            tvEmptyState.setVisibility(View.VISIBLE);
+
+            if (allItems.isEmpty()) {
+
+                tvEmptyState.setText(
+                        "No items posted yet.\nBe the first to add a lost or found item!"
+                );
+
+            } else if (!searchText.isEmpty()) {
+
+                tvEmptyState.setText(
+                        "No matching items found.\nTry another search."
+                );
+
+            } else {
+
+                tvEmptyState.setText(
+                        "No " + selectedFilter.toLowerCase(Locale.ROOT)
+                                + " items available right now."
+                );
+            }
+        }
+    }
+
     private void initializeShakeSensor() {
 
         sensorManager = (SensorManager)
@@ -517,16 +682,12 @@ public class HomeActivity extends Activity {
             }
 
             @Override
-            public void onAccuracyChanged(
-                    Sensor sensor,
-                    int accuracy
-            ) {
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
                 // No action needed
             }
         };
     }
 
-    // Register Sensor
     @Override
     protected void onResume() {
         super.onResume();
@@ -543,7 +704,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Unregister Sensor
     @Override
     protected void onPause() {
         super.onPause();
@@ -555,7 +715,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Microphone Permission Result
     @Override
     public void onRequestPermissionsResult(
             int requestCode,
@@ -578,7 +737,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Clean Up Resources
     @Override
     protected void onDestroy() {
         super.onDestroy();

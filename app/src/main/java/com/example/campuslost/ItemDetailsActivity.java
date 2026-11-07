@@ -31,6 +31,7 @@ public class ItemDetailsActivity extends Activity {
 
     Button btnEdit;
     Button btnDelete;
+    Button btnShare;
 
     String itemId;
     String title;
@@ -62,6 +63,7 @@ public class ItemDetailsActivity extends Activity {
 
         btnEdit = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
+        btnShare = findViewById(R.id.btnShare);
 
         itemId = getIntent().getStringExtra("itemId");
 
@@ -78,6 +80,8 @@ public class ItemDetailsActivity extends Activity {
 
         btnEdit.setVisibility(View.GONE);
         btnDelete.setVisibility(View.GONE);
+
+        btnShare.setOnClickListener(v -> shareItem());
 
         loadItemDetails();
     }
@@ -154,11 +158,46 @@ public class ItemDetailsActivity extends Activity {
 
                     @Override
                     public void onCancelled(DatabaseError error) {
+
                         Toast.makeText(ItemDetailsActivity.this,
                                 "Database error: " + error.getMessage(),
                                 Toast.LENGTH_LONG).show();
+
+                        finish();
                     }
                 });
+    }
+
+    private void shareItem() {
+
+        if (title == null) {
+            Toast.makeText(this,
+                    "Item details are still loading",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String shareText =
+                "CampusLost - Lost & Found Item\n\n" +
+                        "Item: " + title + "\n\n" +
+                        "Description: " +
+                        (description != null ? description : "Not available") + "\n\n" +
+                        "Location: " +
+                        (location != null ? location : "Not available") + "\n\n" +
+                        "Status: " +
+                        (type != null ? type : "Not available") + "\n\n" +
+                        "Posted By: " +
+                        (posterName != null ? posterName : "Not available") + "\n\n" +
+                        "Contact Number: " +
+                        (contactNumber != null ? contactNumber : "Not available") +
+                        "\n\nShared via CampusLost App.";
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+
+        startActivity(Intent.createChooser(
+                shareIntent, "Share item using"));
     }
 
     private void checkItemOwnership() {
